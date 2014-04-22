@@ -2,8 +2,7 @@ package effects;
 
 import com.haxepunk.Entity;
 import com.haxepunk.HXP;
-import com.haxepunk.graphics.Backdrop;
-import com.haxepunk.graphics.Emitter;
+import com.haxepunk.graphics.*;
 import com.haxepunk.graphics.atlas.TextureAtlas;
 import com.haxepunk.utils.Input;
 
@@ -18,8 +17,14 @@ class GameScene extends DemoScene
 		atlas = TextureAtlas.loadTexturePacker("atlas/assets.xml");
 #end
 
-		backdrop = new Backdrop(#if flash "gfx/tile.png" #else atlas.getRegion("tile.png") #end, true, true);
+		// var backdrop = new Backdrop(#if flash "gfx/tile.png" #else atlas.getRegion("tile.png") #end, true, true);
+		// backdrop.color = 0x555555;
+		// addGraphic(backdrop);
+
+		var backdrop = new TiledImage(#if flash "gfx/tile.png" #else atlas.getRegion("tile.png") #end, 400, 300);
 		backdrop.color = 0x555555;
+		backdrop.offsetY = 10;
+		backdrop.offsetX = 6;
 		addGraphic(backdrop);
 	}
 
@@ -67,7 +72,6 @@ class GameScene extends DemoScene
 	}
 
 	private var atlas:TextureAtlas;
-	private var backdrop:Backdrop;
 	private var smokeEntity:Entity;
 	private var smoke:Emitter;
 
