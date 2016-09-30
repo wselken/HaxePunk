@@ -13,10 +13,12 @@ import flash.display.LineScaleMode;
 import haxepunk.graphics.atlas.Atlas;
 import haxepunk.graphics.atlas.AtlasRegion;
 import haxepunk.masks.Polygon;
-import haxepunk.math.Vector;
+import haxepunk.utils.Vector;
 import haxepunk.Graphic;
 import haxepunk.HXP;
 import haxepunk.RenderMode;
+import haxepunk.utils.Color;
+import haxepunk.utils.MathUtil;
 
 /**
  * Performance-optimized non-animated image. Can be drawn to the screen with transformations.
@@ -172,7 +174,7 @@ class Image extends Graphic
 				_matrix.d = sy;
 				_matrix.tx = -originX * sx;
 				_matrix.ty = -originY * sy;
-				if (angle != 0) _matrix.rotate(angle * HXP.RAD);
+				if (angle != 0) _matrix.rotate(angle * MathUtil.RAD);
 				_matrix.tx += originX + _point.x;
 				_matrix.ty += originY + _point.y;
 				target.draw(_bitmap, _matrix, null, blend, null, _bitmap.smoothing);
@@ -219,7 +221,7 @@ class Image extends Graphic
 				sx *= -1;
 			}
 
-			var angle = angle * HXP.RAD;
+			var angle = angle * MathUtil.RAD;
 			var cos = Math.cos(angle);
 			var sin = Math.sin(angle);
 			var a = sx * cos * fsx;
@@ -322,8 +324,8 @@ class Image extends Graphic
 
 		polygon.angle = 0;	// set temporarily angle to 0 so we can sync with image angle later
 
-		minX = minY = HXP.NUMBER_MAX_VALUE;
-		maxX = maxY = -HXP.NUMBER_MAX_VALUE;
+		minX = minY = MathUtil.NUMBER_MAX_VALUE;
+		maxX = maxY = -MathUtil.NUMBER_MAX_VALUE;
 
 		// find polygon bounds
 		for (p in points)
@@ -445,17 +447,17 @@ class Image extends Graphic
 	/**
 	 * The tinted color of the Image. Use 0xFFFFFF to draw the Image normally.
 	 */
-	public var color(get_color, set_color):Int;
-	private inline function get_color():Int return _color; 
-	private function set_color(value:Int):Int
+	public var color(get_color, set_color):Color;
+	private inline function get_color():Color return _color;
+	private function set_color(value:Color):Color
 	{
 		value &= 0xFFFFFF;
 		if (_color == value) return value;
 		_color = value;
 		// save individual color channel values
-		_red = HXP.getRed(_color) / 255;
-		_green = HXP.getGreen(_color) / 255;
-		_blue = HXP.getBlue(_color) / 255;
+		_red = _color.getRed() / 255;
+		_green = _color.getGreen() / 255;
+		_blue = _color.getBlue() / 255;
 		if (blit) updateColorTransform();
 		return _color;
 	}
@@ -614,7 +616,7 @@ class Image extends Graphic
 
 	// Color and alpha information.
 	private var _alpha:Float;
-	private var _color:Int;
+	private var _color:Color;
 	private var _tintFactor:Float = 1.0;
 	private var _tintMode:Float = TINTING_MULTIPLY;
 	private var _tint:ColorTransform;

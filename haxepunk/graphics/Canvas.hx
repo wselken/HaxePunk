@@ -9,6 +9,9 @@ import flash.geom.Point;
 import flash.geom.Rectangle;
 import haxepunk.HXP;
 import haxepunk.Graphic;
+import haxepunk.utils.Color;
+import haxepunk.utils.MathUtil;
+
 
 /**
  * A  multi-purpose drawing canvas, can be sized beyond the normal Flash BitmapData limits.
@@ -149,7 +152,7 @@ class Canvas extends Graphic
 							_matrix.a = sx;
 							_matrix.d = sy;
 							_matrix.tx = _matrix.ty = 0;
-							if (angle != 0) _matrix.rotate(angle * HXP.RAD);
+							if (angle != 0) _matrix.rotate(angle * MathUtil.RAD);
 
 							_midBuffers[i].draw(buffer, _matrix, _tint, blend);
 						}
@@ -164,7 +167,7 @@ class Canvas extends Graphic
 					_matrix.a = sx;
 					_matrix.d = sy;
 					_matrix.tx = _matrix.ty = 0;
-					if (angle != 0) _matrix.rotate(angle * HXP.RAD);
+					if (angle != 0) _matrix.rotate(angle * MathUtil.RAD);
 					_matrix.tx += _point.x;
 					_matrix.ty += _point.y;
 
@@ -332,16 +335,16 @@ class Canvas extends Graphic
 	/**
 	 * The tinted color of the Canvas. Use 0xFFFFFF to draw the it normally.
 	 */
-	public var color(get, set):Int;
-	private function get_color():Int return _color; 
-	private function set_color(value:Int):Int
+	public var color(get, set):Color;
+	private function get_color():Color return _color;
+	private function set_color(value:Int):Color
 	{
 		value %= 0xFFFFFF;
 		if (_color == value) return _color;
 		_color = value;
-		_red = HXP.getRed(color) / 255;
-		_green = HXP.getGreen(color) / 255;
-		_blue = HXP.getBlue(color) / 255;
+		_red = color.getRed() / 255;
+		_green = color.getGreen() / 255;
+		_blue = color.getBlue() / 255;
 
 		if (_alpha == 1 && _color == 0xFFFFFF)
 		{
@@ -414,7 +417,7 @@ class Canvas extends Graphic
 	private var _maxHeight:Int = 4000;
 
 	// Color tinting information.
-	private var _color:Int;
+	private var _color:Color;
 	private var _alpha:Float;
 	private var _tint:ColorTransform;
 	private var _colorTransform:ColorTransform;

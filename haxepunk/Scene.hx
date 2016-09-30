@@ -1,8 +1,10 @@
 package haxepunk;
 
+import haxe.ds.IntMap;
 import flash.display.Sprite;
 import flash.geom.Point;
 import haxepunk.graphics.atlas.AtlasData;
+import haxepunk.utils.MathUtil;
 
 /**
  * Updated by `Engine`, main game container that holds all currently active Entities.
@@ -491,7 +493,7 @@ class Scene extends Tweener
 	{
 		// If the distance is less than precision, do the short sweep.
 		if (precision < 1) precision = 1;
-		if (HXP.distance(fromX, fromY, toX, toY) < precision)
+		if (MathUtil.distance(fromX, fromY, toX, toY) < precision)
 		{
 			if (p != null)
 			{
@@ -645,7 +647,7 @@ class Scene extends Tweener
 		radius *= radius;//Square it to avoid the square root
 		for (e in _types.get(type))
 		{
-			if (HXP.distanceSquared(circleX, circleY, e.x, e.y) < radius) into[n++] = cast e;
+			if (MathUtil.distanceSquared(circleX, circleY, e.x, e.y) < radius) into[n++] = cast e;
 		}
 	}
 
@@ -679,7 +681,7 @@ class Scene extends Tweener
 	public function nearestToRect(type:String, x:Float, y:Float, width:Float, height:Float):Entity
 	{
 		if (!_types.exists(type)) return null;
-		var nearDist:Float = HXP.NUMBER_MAX_VALUE,
+		var nearDist:Float = MathUtil.NUMBER_MAX_VALUE,
 			near:Entity = null, dist:Float;
 		for (e in _types.get(type))
 		{
@@ -704,7 +706,7 @@ class Scene extends Tweener
 	{
 		if (!_types.exists(type)) return null;
 		if (useHitboxes) return nearestToRect(type, e.x - e.originX, e.y - e.originY, e.width, e.height);
-		var nearDist:Float = HXP.NUMBER_MAX_VALUE,
+		var nearDist:Float = MathUtil.NUMBER_MAX_VALUE,
 			near:Entity = null,
 			dist:Float,
 			x:Float = e.x - e.originX,
@@ -734,7 +736,7 @@ class Scene extends Tweener
 	{
 		if (!_types.exists(type)) return null;
 		if (useHitboxes) return nearestToRect(type, e.x - e.originX, e.y - e.originY, e.width, e.height);
-		var nearDist:Float = HXP.NUMBER_MAX_VALUE,
+		var nearDist:Float = MathUtil.NUMBER_MAX_VALUE,
 			near:Entity = null,
 			dist:Float,
 			x:Float = e.x - e.originX,
@@ -762,7 +764,7 @@ class Scene extends Tweener
 	public function nearestToPoint(type:String, x:Float, y:Float, useHitboxes:Bool = false):Entity
 	{
 		if (!_types.exists(type)) return null;
-		var nearDist:Float = HXP.NUMBER_MAX_VALUE,
+		var nearDist:Float = MathUtil.NUMBER_MAX_VALUE,
 			near:Entity = null,
 			dist:Float;
 		if (useHitboxes)
@@ -1191,11 +1193,11 @@ class Scene extends Tweener
 		}
 		if (x1 > x2)
 		{
-			if (y1 > y2) return HXP.distanceSquared((x2 + w2), (y2 + h2), x1, y1);
-			return HXP.distanceSquared(x2 + w2, y2, x1, y1 + h1);
+			if (y1 > y2) return MathUtil.distanceSquared((x2 + w2), (y2 + h2), x1, y1);
+			return MathUtil.distanceSquared(x2 + w2, y2, x1, y1 + h1);
 		}
-		if (y1 > y2) return HXP.distanceSquared(x2, y2 + h2, x1 + w1, y1);
-		return HXP.distanceSquared(x2, y2, x1 + w1, y1 + h1);
+		if (y1 > y2) return MathUtil.distanceSquared(x2, y2 + h2, x1 + w1, y1);
+		return MathUtil.distanceSquared(x2, y2, x1 + w1, y1 + h1);
 	}
 
 	/** @private Calculates the squared distance between a rectangle and a point. */
@@ -1214,11 +1216,11 @@ class Scene extends Tweener
 		}
 		if (px > rx)
 		{
-			if (py > ry) return HXP.distanceSquared(rx + rw, ry + rh, px, py);
-			return HXP.distanceSquared(rx + rw, ry, px, py);
+			if (py > ry) return MathUtil.distanceSquared(rx + rw, ry + rh, px, py);
+			return MathUtil.distanceSquared(rx + rw, ry, px, py);
 		}
-		if (py > ry) return HXP.distanceSquared(rx, ry + rh, px, py);
-		return HXP.distanceSquared(rx, ry, px, py);
+		if (py > ry) return MathUtil.distanceSquared(rx, ry + rh, px, py);
+		return MathUtil.distanceSquared(rx, ry, px, py);
 	}
 
 	// Adding and removal.
