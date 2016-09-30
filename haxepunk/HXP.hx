@@ -1223,10 +1223,10 @@ class HXP
 	public static function resizeStage(width:Int, height:Int)
 	{
 		#if (cpp || neko)
-		#if openfl_legacy
-		HXP.stage.resize(width, height);
-		#else
+		#if (lime && !lime_legacy)
 		openfl.Lib.application.window.resize(width, height);
+		#else
+		HXP.stage.resize(width, height);
 		#end
 		resize(width, height);
 		#elseif debug
