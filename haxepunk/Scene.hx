@@ -25,7 +25,7 @@ class Scene extends Tweener
 	/**
 	 * Point used to determine drawing offset in the render loop.
 	 */
-	public var camera:Point;
+	public var camera:Camera;
 
 	public var width:Int = 0;
 	public var height:Int = 0;
@@ -37,7 +37,7 @@ class Scene extends Tweener
 	{
 		super();
 		visible = true;
-		camera = new Point();
+		camera = new Camera();
 		sprite = new Sprite();
 
 		_layerList = new Array<Int>();
