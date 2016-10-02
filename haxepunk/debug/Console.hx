@@ -1,11 +1,8 @@
 package haxepunk.debug;
 
-import haxepunk.Entity;
-import haxepunk.HXP;
-import haxepunk.input.Input;
-import haxepunk.input.Key;
-import haxepunk.utils.MathUtil;
-
+import haxe.Log;
+import haxe.PosInfos;
+import haxe.ds.IntMap;
 import openfl.Assets;
 import flash.display.Bitmap;
 import flash.display.BlendMode;
@@ -17,10 +14,13 @@ import flash.geom.Rectangle;
 import flash.text.TextField;
 import flash.text.TextFormat;
 import flash.text.TextFormatAlign;
+import haxepunk.Entity;
+import haxepunk.HXP;
+import haxepunk.input.Input;
+import haxepunk.input.Key;
+import haxepunk.utils.Color;
+import haxepunk.utils.MathUtil;
 
-import haxe.Log;
-import haxe.PosInfos;
-import haxe.ds.IntMap;
 
 /**
  * If the console should capture the trace() function calls.
@@ -1102,7 +1102,7 @@ class Console
 	}
 
 	/** @private Gets a TextFormat object with the formatting. */
-	private function format(size:Int = 16, color:Int = 0xFFFFFF, align:String = "left"):TextFormat
+	private function format(size:Int = 16, color:Color = 0xFFFFFF, align:String = "left"):TextFormat
 	{
 		_format.size = size;
 		_format.color = color;

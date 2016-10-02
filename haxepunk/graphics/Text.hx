@@ -7,6 +7,8 @@ import flash.text.TextFormatAlign;
 import openfl.Assets;
 import haxepunk.HXP;
 import haxepunk.graphics.atlas.Atlas;
+import haxepunk.utils.Color;
+
 
 /**
  * Text option including the font, size, color...
@@ -28,7 +30,7 @@ typedef TextOptions =
 	/** Optional. If the text field can automatically resize if its contents grow. Default value is true. */
 	@:optional var resizable:Bool;
 	/** Optional. The color of the text. Default value is white. */
-	@:optional var color:Int;
+	@:optional var color:Color;
 	/** Optional. Vertical space between lines. Default value is 0. */
 	@:optional var leading:Int;
 	/** Optional. If the text field uses a rich text string. */

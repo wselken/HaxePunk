@@ -219,7 +219,7 @@ class Canvas extends Graphic
 	 * @param	color		Fill color.
 	 * @param	alpha		Fill alpha.
 	 */
-	public function fill(rect:Rectangle, color:Int = 0, alpha:Float = 1)
+	public function fill(rect:Rectangle, color:Color = 0, alpha:Float = 1)
 	{
 		var xx:Int = 0, yy:Int = 0, buffer:BitmapData;
 		_rect.width = rect.width;
@@ -247,7 +247,7 @@ class Canvas extends Graphic
 	 * @param	color		Draw color.
 	 * @param	alpha		Draw alpha. If < 1, this rectangle will blend with existing contents of the canvas.
 	 */
-	public function drawRect(rect:Rectangle, color:Int = 0, alpha:Float = 1)
+	public function drawRect(rect:Rectangle, color:Color = 0, alpha:Float = 1)
 	{
 		var xx:Int = 0, yy:Int = 0, buffer:BitmapData;
 		if (alpha >= 1)
@@ -337,9 +337,9 @@ class Canvas extends Graphic
 	 */
 	public var color(get, set):Color;
 	private function get_color():Color return _color;
-	private function set_color(value:Int):Color
+	private function set_color(value:Color):Color
 	{
-		value %= 0xFFFFFF;
+		value &= 0xFFFFFF;
 		if (_color == value) return _color;
 		_color = value;
 		_red = color.getRed() / 255;

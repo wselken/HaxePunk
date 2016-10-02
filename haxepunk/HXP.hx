@@ -17,6 +17,7 @@ import haxepunk.Tween.TweenType;
 import haxepunk.debug.Console;
 import haxepunk.tweens.misc.Alarm;
 import haxepunk.tweens.misc.MultiVarTween;
+import haxepunk.utils.Color;
 import haxepunk.utils.Cursor;
 import haxepunk.utils.HaxelibInfo;
 import haxepunk.utils.MathUtil;
@@ -36,7 +37,7 @@ class HXP
 	/**
 	 * Deprecated, use 0 instead. The color black (as an Int).
 	 */
-	@:deprecated public static inline var blackColor:Int = 0x00000000;
+	@:deprecated public static inline var blackColor:Color = 0x00000000;
 
 	/**
 	 * Width of the game.
@@ -458,7 +459,7 @@ class HXP
 	 *
 	 * @return	The BitmapData.
 	 */
-	public static function createBitmap(width:Int, height:Int, ?transparent:Bool = false, ?color:Int = 0):BitmapData
+	public static function createBitmap(width:Int, height:Int, ?transparent:Bool = false, ?color:Color = 0):BitmapData
 	{
 #if flash
 	#if flash8

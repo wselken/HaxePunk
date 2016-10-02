@@ -243,7 +243,7 @@ class Image extends Graphic
 	 * @param	alpha		Alpha of the rectangle.
 	 * @return	A new Image object of a rectangle.
 	 */
-	public static function createRect(width:Int, height:Int, color:Int = 0xFFFFFF, alpha:Float = 1):Image
+	public static function createRect(width:Int, height:Int, color:Color = 0xFFFFFF, alpha:Float = 1):Image
 	{
 		if (width == 0 || height == 0)
 			throw "Illegal rect, sizes cannot be 0.";
@@ -272,7 +272,7 @@ class Image extends Graphic
 	 * @param	alpha		Alpha of the circle.
 	 * @return	A new Image object of a circle.
 	 */
-	public static function createCircle(radius:Int, color:Int = 0xFFFFFF, alpha:Float = 1):Image
+	public static function createCircle(radius:Int, color:Color = 0xFFFFFF, alpha:Float = 1):Image
 	{
 		if (radius == 0)
 			throw "Illegal circle, radius cannot be 0.";
@@ -309,7 +309,7 @@ class Image extends Graphic
 	 * @return	A new Image object.
 	 * @since	2.5.3
 	 */
-	public static function createPolygon(polygon:Polygon, color:Int = 0xFFFFFF, alpha:Float = 1, fill:Bool = true, thick:Int = 1):Image
+	public static function createPolygon(polygon:Polygon, color:Color = 0xFFFFFF, alpha:Float = 1, fill:Bool = true, thick:Int = 1):Image
 	{
 		var graphics:Graphics = HXP.sprite.graphics;
 		var points:Array<Vector> = polygon.points;
@@ -339,7 +339,7 @@ class Image extends Graphic
 		var w:Int = Math.ceil(maxX - minX);
 		var h:Int = Math.ceil(maxY - minY);
 
-		if (color > 0xFFFFFF) color = 0xFFFFFF & color;
+		color &= 0xFFFFFF;
 		graphics.clear();
 
 		if (fill)
