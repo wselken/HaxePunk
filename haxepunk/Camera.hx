@@ -3,6 +3,10 @@ package haxepunk;
 import flash.geom.Point;
 
 
+/**
+ * Controls camera position and zoom.
+ * @since	4.0.0
+ */
 class Camera extends Point
 {
 	public var scale:Float = 1;
