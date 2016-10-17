@@ -1,22 +1,28 @@
-package haxepunk.graphics.atlas.renderer;
+package haxepunk.graphics.atlas;
 
-#if tile_shader
-import lime.graphics.GLRenderContext;
-import lime.utils.Float32Array;
-import lime.utils.UInt32Array;
+import flash.geom.Rectangle;
 import openfl.display.BitmapData;
+import openfl.display.BlendMode;
 import openfl.display.DisplayObject;
 import openfl.display.Graphics;
-import openfl.display.Shader;
 import openfl.geom.Matrix;
+import openfl.geom.Point;
 import openfl.gl.GL;
 import openfl.gl.GLBuffer;
 import openfl.gl.GLProgram;
-import openfl._internal.renderer.opengl.GLRenderer;
+#if lime
+import lime.math.Matrix4 as Matrix3D;
+import lime.utils.Float32Array;
+import lime.utils.UInt32Array;import openfl._internal.renderer.opengl.GLRenderer;
+#elseif nme
+import nme.geom.Matrix3D;
+import nme.utils.Float32Array;
+import nme.utils.Int32Array as UInt32Array;
+#end
 import haxepunk.HXP;
 
 @:dox(hide)
-private class TileShader
+private class TextureShader
 {
 	public var glProgram:GLProgram;
 
@@ -56,21 +62,22 @@ void main(void) {
 
 	public function new()
 	{
+		glProgram = GL.createProgram();
+
 		var vertexShader = GL.createShader(GL.VERTEX_SHADER);
 		GL.shaderSource(vertexShader, VERTEX_SHADER);
 		GL.compileShader(vertexShader);
 		if (GL.getShaderParameter(vertexShader, GL.COMPILE_STATUS) == 0)
 			throw "Error compiling vertex shader";
+		GL.attachShader(glProgram, vertexShader);
 
 		var fragmentShader = GL.createShader(GL.FRAGMENT_SHADER);
 		GL.shaderSource(fragmentShader, FRAGMENT_SHADER);
 		GL.compileShader(fragmentShader);
 		if (GL.getShaderParameter(fragmentShader, GL.COMPILE_STATUS) == 0)
 			throw "Error compiling fragment shader";
-
-		glProgram = GL.createProgram();
-		GL.attachShader(glProgram, vertexShader);
 		GL.attachShader(glProgram, fragmentShader);
+
 		GL.linkProgram(glProgram);
 		if (GL.getProgramParameter(glProgram, GL.LINK_STATUS) == 0)
 			throw "Unable to initialize the shader program.";
@@ -100,18 +107,19 @@ void main(void) {
  * support for drawTiles. Based on work by @Yanrishatum.
  * @since	2.6.0
  */
+#if lime
 @:access(openfl.display.Stage)
-@:access(openfl.display.DisplayObject)
-@:access(openfl.display.Graphics)
-@:access(openfl._internal.renderer.RenderSession)
 @:access(openfl._internal.renderer.opengl.GLRenderer)
+#end
+@:access(haxepunk.Camera)
 @:dox(hide)
-class TileShaderRenderer
+class HardwareRenderer
 {
 	static inline var BUFFER_CHUNK:Int = 32;
 	static inline var INDEX_CHUNK:Int = 6;
+	static inline var FLOAT32_BYTES:Int = #if lime Float32Array.BYTES_PER_ELEMENT #else Float32Array.SBYTES_PER_ELEMENT #end;
 
-	static var shader:TileShader;
+	static var textureShader:TextureShader;
 
 	static inline function resize(length:Int, minChunks:Int, chunkSize:Int)
 	{
@@ -131,40 +139,32 @@ class TileShaderRenderer
 		return px * m.b + py * m.d + m.ty;
 	}
 
-	var data:AtlasData;
+	static var buffer:Float32Array;
+	static var indexes:UInt32Array;
+	static var glBuffer:GLBuffer;
+	static var glIndexes:GLBuffer;
 
-	var buffer:Float32Array;
-	var indexes:UInt32Array;
-	var glBuffer:GLBuffer;
-	var glIndexes:GLBuffer;
-
-	public function new(data:AtlasData)
+	@:access(haxepunk.graphics.atlas.DrawCommand)
+	@:access(haxepunk.graphics.atlas.QuadData)
+	public static inline function render(drawCommand:DrawCommand, camera:Camera, rect:Rectangle):Void
 	{
-		this.data = data;
-		if (shader == null) shader = new TileShader();
-	}
-
-	public inline function drawTiles(graphics:Graphics, tileData:Array<Float>, smooth:Bool = false, flags:Int = 0, count:Int = -1):Void
-	{
-		if (count == -1) count = tileData.length;
-
-		if (count > 0)
+		if (drawCommand != null && drawCommand.quads > 0)
 		{
-			var renderer:GLRenderer = cast HXP.stage.__renderer;
-			var renderSession = renderer.renderSession;
-			var gl:GLRenderContext = renderSession.gl;
-			var displayObject:DisplayObject = graphics.__owner;
+			if (textureShader == null) textureShader = new TextureShader();
 
-			var blend:Int = data.blend;
-			var texture:BitmapData = data.bitmapData;
+			var shader = textureShader;
+			shader.bind();
+
+			var blend:Int = drawCommand.blend;
+			var smooth:Bool = drawCommand.smooth;
 
 			var tx:Float, ty:Float, rx:Float, ry:Float, rw:Float, rh:Float, a:Float, b:Float, c:Float, d:Float,
 				uvx:Float, uvy:Float, uvx2:Float, uvy2:Float,
 				red:Float, green:Float, blue:Float, alpha:Float;
 
 			// expand arrays if necessary
-			var items = Std.int(count / 14);
 			var bufferLength:Int = buffer == null ? 0 : buffer.length;
+			var items = drawCommand.quads;
 			if (bufferLength < items * BUFFER_CHUNK)
 			{
 				buffer = new Float32Array(resize(bufferLength, items, BUFFER_CHUNK));
@@ -187,29 +187,34 @@ class TileShaderRenderer
 				indexes = newIndexes;
 			}
 
-			var n:Int = 0, bufferPos:Int = 0, matrix:Matrix = HXP.matrix;
+			var bufferPos:Int = 0, matrix:Matrix = HXP.matrix;
+			var texture = drawCommand.texture;
+			var quad = drawCommand.quad;
 
-			while (n < count)
+			while (quad != null)
 			{
-				tx = tileData[n++];
-				ty = tileData[n++];
-				rx = tileData[n++];
-				ry = tileData[n++];
-				rw = tileData[n++];
-				rh = tileData[n++];
-				a = tileData[n++];
-				b = tileData[n++];
-				c = tileData[n++];
-				d = tileData[n++];
-				red = tileData[n++];
-				green = tileData[n++];
-				blue = tileData[n++];
-				alpha = tileData[n++];
+				rx = quad.rx;
+				ry = quad.ry;
+				rw = quad.rw;
+				rh = quad.rh;
+				a = quad.a;
+				b = quad.b;
+				c = quad.c;
+				d = quad.d;
+				tx = quad.tx;
+				ty = quad.ty;
+				red = quad.red;
+				green = quad.green;
+				blue = quad.blue;
+				alpha = quad.alpha;
 
-				uvx = (rx / texture.width);
-				uvy = (ry / texture.height);
-				uvx2 = ((rx + rw) / texture.width);
-				uvy2 = ((ry + rh) / texture.height);
+				if (texture != null)
+				{
+					uvx = (rx / texture.width);
+					uvy = (ry / texture.height);
+					uvx2 = ((rx + rw) / texture.width);
+					uvy2 = ((ry + rh) / texture.height);
+				}
 
 				matrix.setTo(a, b, c, d, tx, ty);
 
@@ -219,79 +224,113 @@ class TileShaderRenderer
 				var start = bufferPos;
 				buffer[bufferPos++] = transformX(0, 0);
 				buffer[bufferPos++] = transformY(0, 0);
-				buffer[bufferPos++] = uvx;
-				buffer[bufferPos++] = uvy;
+				if (texture != null)
+				{
+					buffer[bufferPos++] = uvx;
+					buffer[bufferPos++] = uvy;
+				}
 				buffer[bufferPos++] = red;
 				buffer[bufferPos++] = green;
 				buffer[bufferPos++] = blue;
 				buffer[bufferPos++] = alpha;
 				buffer[bufferPos++] = transformX(rw, 0);
 				buffer[bufferPos++] = transformY(rw, 0);
-				buffer[bufferPos++] = uvx2;
-				buffer[bufferPos++] = uvy;
+				if (texture != null)
+				{
+					buffer[bufferPos++] = uvx2;
+					buffer[bufferPos++] = uvy;
+				}
 				buffer[bufferPos++] = red;
 				buffer[bufferPos++] = green;
 				buffer[bufferPos++] = blue;
 				buffer[bufferPos++] = alpha;
 				buffer[bufferPos++] = transformX(0, rh);
 				buffer[bufferPos++] = transformY(0, rh);
-				buffer[bufferPos++] = uvx;
-				buffer[bufferPos++] = uvy2;
+				if (texture != null)
+				{
+					buffer[bufferPos++] = uvx;
+					buffer[bufferPos++] = uvy2;
+				}
 				buffer[bufferPos++] = red;
 				buffer[bufferPos++] = green;
 				buffer[bufferPos++] = blue;
 				buffer[bufferPos++] = alpha;
 				buffer[bufferPos++] = transformX(rw, rh);
 				buffer[bufferPos++] = transformY(rw, rh);
-				buffer[bufferPos++] = uvx2;
-				buffer[bufferPos++] = uvy2;
+				if (texture != null)
+				{
+					buffer[bufferPos++] = uvx2;
+					buffer[bufferPos++] = uvy2;
+				}
 				buffer[bufferPos++] = red;
 				buffer[bufferPos++] = green;
 				buffer[bufferPos++] = blue;
 				buffer[bufferPos++] = alpha;
+
+				quad = quad._next;
 			}
 
-			shader.bind();
-			gl.uniform1f(shader.uniformIndex("uAlpha"), displayObject.__worldAlpha);
-			gl.uniformMatrix4fv(shader.uniformIndex("uMatrix"), false, new lime.utils.Float32Array(renderer.getMatrix(displayObject.__renderTransform)));
+			var rx = HXP.screen.x + rect.x, ry = HXP.screen.y + rect.y;
+			var m = Matrix3D.createOrtho(-rx, -rx + HXP.stage.stageWidth, -ry + HXP.stage.stageHeight, -ry, 1000, -1000);
+			var transformation = #if lime new Float32Array #else Float32Array.fromMatrix #end (m);
+			GL.uniformMatrix4fv(shader.uniformIndex("uMatrix"), false, transformation);
 
-			renderSession.blendModeManager.setBlendMode(cast blend);
-
-			gl.bindTexture(gl.TEXTURE_2D, texture.getTexture(gl));
-			if (smooth)
+			if (texture != null)
 			{
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			}
-			else
-			{
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+				#if lime
+				var renderer:GLRenderer = cast HXP.stage.__renderer;
+				var renderSession = renderer.renderSession;
+				GL.bindTexture(GL.TEXTURE_2D, texture.getTexture(renderSession.gl));
+				#else
+				GL.bindBitmapDataTexture(texture);
+				#end
+				if (smooth)
+				{
+					GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
+					GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
+				}
+				else
+				{
+					GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.NEAREST);
+					GL.texParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST);
+				}
 			}
 
 			if (glBuffer == null)
 			{
-				glBuffer = gl.createBuffer();
-				glIndexes = gl.createBuffer();
+				glBuffer = GL.createBuffer();
+				glIndexes = GL.createBuffer();
 			}
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, glBuffer);
-			gl.bufferData(gl.ARRAY_BUFFER, buffer, gl.DYNAMIC_DRAW);
+			GL.bindBuffer(GL.ARRAY_BUFFER, glBuffer);
+			GL.bufferData(GL.ARRAY_BUFFER, buffer, GL.DYNAMIC_DRAW);
 
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, glIndexes);
-			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexes, gl.DYNAMIC_DRAW);
+			GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, glIndexes);
+			GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, indexes, GL.DYNAMIC_DRAW);
 
-			gl.vertexAttribPointer(shader.attributeIndex("aPosition"), 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 0);
-			gl.vertexAttribPointer(shader.attributeIndex("aTexCoord"), 2, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
-			gl.vertexAttribPointer(shader.attributeIndex("aColor"), 4, gl.FLOAT, false, 8 * Float32Array.BYTES_PER_ELEMENT, 4 * Float32Array.BYTES_PER_ELEMENT);
+			GL.vertexAttribPointer(shader.attributeIndex("aPosition"), 2, GL.FLOAT, false, 8 * FLOAT32_BYTES, 0);
+			if (texture != null)
+			{
+				GL.vertexAttribPointer(shader.attributeIndex("aTexCoord"), 2, GL.FLOAT, false, 8 * FLOAT32_BYTES, 2 * FLOAT32_BYTES);
+			}
+			GL.vertexAttribPointer(shader.attributeIndex("aColor"), 4, GL.FLOAT, false, 8 * FLOAT32_BYTES, 4 * FLOAT32_BYTES);
 
-			gl.scissor(HXP.screen.x, HXP.screen.y, HXP.screen.width, HXP.screen.height);
-			gl.enable(gl.SCISSOR_TEST);
-			gl.drawElements(gl.TRIANGLES, items * INDEX_CHUNK, gl.UNSIGNED_INT, 0);
-			gl.disable(gl.SCISSOR_TEST);
-
-			renderSession.shaderManager.setShader(null);
+			GL.scissor(Std.int(rx), Std.int(HXP.stage.stageHeight - ry - rect.height), Std.int(rect.width), Std.int(rect.height));
+			GL.enable(GL.SCISSOR_TEST);
+			GL.drawElements(GL.TRIANGLES, items * INDEX_CHUNK, GL.UNSIGNED_INT, 0);
+			GL.disable(GL.SCISSOR_TEST);
 		}
+
+		GL.useProgram(null);
+		checkForGLErrors();
 	}
+
+	static inline function checkForGLErrors()
+	{
+		var error = GL.getError();
+		if (error != GL.NO_ERROR)
+			trace("GL Error: " + error);
+	}
+
+	static var _point:Point = new Point();
 }
-#end

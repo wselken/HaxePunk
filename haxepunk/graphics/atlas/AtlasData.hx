@@ -53,7 +53,7 @@ class AtlasData
 	/**
 	 * Creates a new AtlasData class
 	 * 
-	 * **NOTE**: Only create one instace of AtlasData per name. An error will be thrown if you try to create a duplicate.
+	 * **NOTE**: Only create one instance of AtlasData per name. An error will be thrown if you try to create a duplicate.
 	 * 
 	 * @param bd     BitmapData image to use for rendering
 	 * @param name   A reference to the image data, used with destroy and for setting rendering flags
@@ -61,10 +61,6 @@ class AtlasData
 	public function new(bd:BitmapData, ?name:String, ?flags:Int)
 	{
 		bitmapData = bd;
-
-		_data = new Array<Float>();
-		_smoothData = new Array<Float>();
-		_dataIndex = _smoothDataIndex = 0;
 
 		_name = name;
 
@@ -80,12 +76,8 @@ class AtlasData
 			}
 		}
 
-		_renderFlags = Tilesheet.TILE_TRANS_2X2 | Tilesheet.TILE_ALPHA | Tilesheet.TILE_BLEND_NORMAL | Tilesheet.TILE_RGB | Tilesheet.TILE_RECT;
-
 		width = bd.width;
 		height = bd.height;
-
-		renderer = new Renderer(this);
 	}
 
 	/**
@@ -137,26 +129,10 @@ class AtlasData
 	 * Sets the scene object
 	 * @param	scene	The scene object to set
 	 */
-	@:allow(haxepunk.Scene)
-	private static inline function startScene(scene:Scene):Void
+	@:allow(haxepunk.Camera)
+	private static inline function startScene(camera:Camera):Void
 	{
-		_scene = scene;
-		_scene.sprite.graphics.clear();
-	}
-
-	/**
-	 * The active atlas data object
-	 */
-	public static var active(default, set):AtlasData;
-	private static inline function set_active(?value:AtlasData):AtlasData
-	{
-		if (active != value)
-		{
-			if (active != null)
-				active.flush();
-			active = value;
-		}
-		return value;
+		_camera = camera;
 	}
 
 	/**
@@ -195,24 +171,6 @@ class AtlasData
 	}
 
 	/**
-	 * Flushes the renderable data array
-	 */
-	public inline function flush():Void
-	{
-		if (_dataIndex != 0)
-		{
-			renderer.drawTiles(_scene.sprite.graphics, _data, false, _renderFlags, _dataIndex);
-			_dataIndex = 0;
-		}
-
-		if (_smoothDataIndex != 0)
-		{
-			renderer.drawTiles(_scene.sprite.graphics, _smoothData, true, _renderFlags, _smoothDataIndex);
-			_smoothDataIndex = 0;
-		}
-	}
-
-	/**
 	 * Prepares a tile to be drawn using a matrix
 	 * @param  rect   The source rectangle to draw
 	 * @param  layer The layer to draw on
@@ -231,43 +189,9 @@ class AtlasData
 		tx:Float, ty:Float, a:Float, b:Float, c:Float, d:Float,
 		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
 	{
-		active = this;
-
 		if (smooth == null) smooth = Atlas.smooth;
-
-		var _data = smooth ? _smoothData : _data;
-		var _dataIndex = smooth ? _smoothDataIndex : _dataIndex;
-
-		// Destination point
-		_data[_dataIndex++] = tx;
-		_data[_dataIndex++] = ty;
-
-		// Source rectangle
-		_data[_dataIndex++] = rect.x;
-		_data[_dataIndex++] = rect.y;
-		_data[_dataIndex++] = rect.width;
-		_data[_dataIndex++] = rect.height;
-
-		// matrix transformation
-		_data[_dataIndex++] = a; // m00
-		_data[_dataIndex++] = b; // m10
-		_data[_dataIndex++] = c; // m01
-		_data[_dataIndex++] = d; // m11
-
-		// color
-		_data[_dataIndex++] = red;
-		_data[_dataIndex++] = green;
-		_data[_dataIndex++] = blue;
-		_data[_dataIndex++] = alpha;
-
-		if (smooth)
-		{
-			this._smoothDataIndex = _dataIndex;
-		}
-		else
-		{
-			this._dataIndex = _dataIndex;
-		}
+		var command = _camera.sprite.getDrawCommand(bitmapData, smooth, blend);
+		command.add(rect.x, rect.y, rect.width, rect.height, a, b, c, d, tx, ty, red, green, blue, alpha);
 	}
 
 	/**
@@ -284,112 +208,43 @@ class AtlasData
 	 * @param  blue   Blue color value
 	 * @param  alpha  Alpha value
 	 */
-	public inline function prepareTile(rect:Rectangle, x:Float, y:Float, layer:Int,
+	public inline function prepareTile(rect:Rectangle, tx:Float, ty:Float, layer:Int,
 		scaleX:Float, scaleY:Float, angle:Float,
 		red:Float, green:Float, blue:Float, alpha:Float, ?smooth:Bool)
 	{
-		active = this;
-
 		if (smooth == null) smooth = Atlas.smooth;
 
-		var _data = smooth ? _smoothData : _data;
-		var _dataIndex = smooth ? _smoothDataIndex : _dataIndex;
-
-		// Destination point
-		_data[_dataIndex++] = x;
-		_data[_dataIndex++] = y;
-
-		// Source rectangle
-		_data[_dataIndex++] = rect.x;
-		_data[_dataIndex++] = rect.y;
-		_data[_dataIndex++] = rect.width;
-		_data[_dataIndex++] = rect.height;
+		var a:Float, b:Float, c:Float, d:Float;
 
 		// matrix transformation
 		if (angle == 0)
 		{
 			// fast defaults for non-rotated tiles (cos=1, sin=0)
-			_data[_dataIndex++] = scaleX; // m00
-			_data[_dataIndex++] = 0; // m01
-			_data[_dataIndex++] = 0; // m10
-			_data[_dataIndex++] = scaleY; // m11
+			a = scaleX; // m00
+			b = 0; // m01
+			c = 0; // m10
+			d = scaleY; // m11
 		}
 		else
 		{
 			var cos = Math.cos(-angle * MathUtil.RAD);
 			var sin = Math.sin(-angle * MathUtil.RAD);
-			_data[_dataIndex++] = cos * scaleX; // m00
-			_data[_dataIndex++] = -sin * scaleY; // m10
-			_data[_dataIndex++] = sin * scaleX; // m01
-			_data[_dataIndex++] = cos * scaleY; // m11
+			a = cos * scaleX; // m00
+			b = -sin * scaleY; // m10
+			c = sin * scaleX; // m01
+			d = cos * scaleY; // m11
 		}
 
-		_data[_dataIndex++] = red;
-		_data[_dataIndex++] = green;
-		_data[_dataIndex++] = blue;
-		_data[_dataIndex++] = alpha;
-
-		if (smooth)
-		{
-			this._smoothDataIndex = _dataIndex;
-		}
-		else
-		{
-			this._dataIndex = _dataIndex;
-		}
+		var command = _camera.sprite.getDrawCommand(bitmapData, smooth, blend);
+		command.add(rect.x, rect.y, rect.width, rect.height, a, b, c, d, tx, ty, red, green, blue, alpha);
 	}
 
-	/**
-	 * Sets the blend mode for rendering (`BLEND_NONE`, `BLEND_NORMAL`, `BLEND_ADD`)
-	 * Default: `BLEND_NORMAL`
-	 */
-	public var blend(get, set):Int;
-	private function get_blend():Int
-	{
-		if (_renderFlags & Tilesheet.TILE_BLEND_NORMAL != 0)
-			return BLEND_NORMAL;
-		else if (_renderFlags & Tilesheet.TILE_BLEND_ADD != 0)
-			return BLEND_ADD;
-#if !flash
-		else if (_renderFlags & Tilesheet.TILE_BLEND_MULTIPLY != 0)
-			return BLEND_MULTIPLY;
-		else if (_renderFlags & Tilesheet.TILE_BLEND_SCREEN != 0)
-			return BLEND_SCREEN;
-#end
-		else
-			return BLEND_NONE;
-	}
-	private function set_blend(value:Int):Int
-	{
-		// unset blend flags
-		_renderFlags &= ~(BLEND_ADD | BLEND_SCREEN | BLEND_MULTIPLY | BLEND_NORMAL);
-
-		// check that value is actually a blend flag
-		if (value == BLEND_ADD ||
-			value == BLEND_MULTIPLY ||
-			value == BLEND_SCREEN ||
-			value == BLEND_NORMAL)
-		{
-			// set the blend flag
-			_renderFlags |= value;
-			return value;
-		}
-		return BLEND_NONE;
-	}
+	public var blend:BlendMode = BlendMode.Alpha;
 
 	// used for pooling
 	private var _name:String;
 
-	private var _layerIndex:Int = 0;
-
-	private var _renderFlags:Int;
-
-	private var _data:Array<Float>;
-	private var _dataIndex:Int;
-	private var _smoothData:Array<Float>;
-	private var _smoothDataIndex:Int;
-
-	private static var _scene:Scene;
+	private static var _camera:Camera;
 	private static var _dataPool:Map<String, AtlasData> = new Map<String, AtlasData>();
 	private static var _uniqueId:Int = 0; // allows for unique names
 }

@@ -70,11 +70,17 @@ class Screen
 		var oldWidth:Int = HXP.width,
 			oldHeight:Int = HXP.height;
 
-		HXP.camera.x += HXP.screen.offsetX;
-		HXP.camera.y += HXP.screen.offsetY;
+		if (HXP.camera != null)
+		{
+			HXP.camera.x += HXP.screen.offsetX;
+			HXP.camera.y += HXP.screen.offsetY;
+		}
 		scaleMode.resize(width, height);
-		HXP.camera.x -= HXP.screen.offsetX;
-		HXP.camera.y -= HXP.screen.offsetY;
+		if (HXP.camera != null)
+		{
+			HXP.camera.x -= HXP.screen.offsetX;
+			HXP.camera.y -= HXP.screen.offsetY;
+		}
 
 		width = HXP.width = Std.int(HXP.screen.width / HXP.screen.fullScaleX);
 		height = HXP.height = Std.int(HXP.screen.height / HXP.screen.fullScaleY);
@@ -123,8 +129,15 @@ class Screen
 	 */
 	public function refresh()
 	{
-		// refreshes the screen
-		HXP.buffer.fillRect(HXP.bounds, 0xFF000000 | HXP.stage.color);
+		if (HXP.renderMode == RenderMode.BUFFER)
+		{
+			// refreshes the screen
+			HXP.buffer.fillRect(HXP.bounds, 0xFF000000 | HXP.stage.color);
+		}
+		else
+		{
+			//HXP.engine.graphics.clear();
+		}
 	}
 
 	/**

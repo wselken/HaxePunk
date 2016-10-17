@@ -106,9 +106,13 @@ class HXP
 	public static var defaultFont:String = "font/04B_03__.ttf";
 
 	/**
-	 * Point used to determine drawing offset in the render loop.
+	 * Returns the current scene's default camera.
 	 */
-	public static var camera:Camera = new Camera();
+	public static var camera(get, never):Camera;
+	static inline function get_camera()
+	{
+		return scene == null ? null : scene.camera;
+	}
 
 	/**
 	 * Global tweener for tweening between multiple scenes

@@ -440,9 +440,6 @@ class Console
 		if (!_enabled || !_visible)
 			return;
 
-		if (_paused)
-			HXP.engine.render();
-
 		// move on resize
 		_entRead.x = width - _entReadText.width;
 		_layerList.x = width - _layerList.width - 20;
@@ -1005,7 +1002,7 @@ class Console
 
 		// Update the Debug read text.
 		var s:String =
-			"Mouse: " + Std.string(HXP.scene.mouseX) + ", " + Std.string(HXP.scene.mouseY) +
+			"Mouse: " + Std.string(HXP.scene.camera.mouseX) + ", " + Std.string(HXP.scene.camera.mouseY) +
 			"\nCamera: " + Std.string(HXP.camera.x) + ", " + Std.string(HXP.camera.y);
 		if (SELECT_LIST.length != 0)
 		{

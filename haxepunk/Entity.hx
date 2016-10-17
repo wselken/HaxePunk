@@ -71,6 +71,24 @@ class Entity extends Tweener
 	}
 
 	/**
+	 * Cameras this entity should be rendered to. If null, it will use the
+	 * scene's default camera.
+	 */
+	public var cameras(get, set):Array<Camera>;
+	inline function get_cameras():Array<Camera>
+	{
+		// FIXME: if scene is null?
+		return _cameras != null ? _cameras : _scene != null ? _scene._defaultCameras : [];
+	}
+	inline function set_cameras(cameras:Array<Camera>)
+	{
+		if (_scene != null) _scene.removeRender(this);
+		_cameras = cameras;
+		if (_scene != null) _scene.addRender(this);
+		return _cameras = cameras;
+	}
+
+	/**
 	 * If the entity should follow the camera.
 	 */
 	public var followCamera:Bool = false;
@@ -125,7 +143,6 @@ class Entity extends Tweener
 
 		HITBOX = new Mask();
 		_point = HXP.point;
-		_camera = HXP.point2;
 
 		layer = 0;
 
@@ -159,7 +176,7 @@ class Entity extends Tweener
 	 * Renders the Entity. If you override this for special behaviour,
 	 * remember to call super.render() to render the Entity's graphic.
 	 */
-	public function render():Void
+	public function render(camera:Camera):Void
 	{
 		if (_graphic != null && _graphic.visible)
 		{
@@ -169,15 +186,13 @@ class Entity extends Tweener
 				_point.y = y;
 			}
 			else _point.x = _point.y = 0;
-			_camera.x = _scene == null ? HXP.camera.x : _scene.camera.x;
-			_camera.y = _scene == null ? HXP.camera.y : _scene.camera.y;
-			if (_graphic.blit)
+			if (graphic.blit)
 			{
-				_graphic.render((renderTarget != null) ? renderTarget : HXP.buffer, _point, _camera);
+				graphic.render(camera.buffer, _point, camera);
 			}
 			else
 			{
-				_graphic.renderAtlas(layer, _point, _camera);
+				graphic.renderAtlas(_layer, _point, camera);
 			}
 		}
 	}
@@ -923,7 +938,7 @@ class Entity extends Tweener
 	// Rendering information.
 	private var _graphic:Graphic;
 	private var _point:Point;
-	private var _camera:Point;
+	private var _cameras:Array<Camera>;
 
 	static var _EMPTY:Entity = new Entity();
 }

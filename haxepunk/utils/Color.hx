@@ -83,6 +83,15 @@ abstract Color(UInt) from UInt to UInt
 		return 0;
 	}
 
+	public var r(get, never):UInt;
+	inline function get_r() return getRed();
+	public var g(get, never):UInt;
+	inline function get_g() return getGreen();
+	public var b(get, never):UInt;
+	inline function get_b() return getBlue();
+	public var a(get, never):Float;
+	inline function get_a() return getAlpha() / 0xff;
+
 	public inline function getAlpha():UInt return (this >> 24) & 0xff;
 	public inline function getRed():UInt return (this >> 16) & 0xff;
 	public inline function getGreen():UInt return (this >> 8) & 0xff;

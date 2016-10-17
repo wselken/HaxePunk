@@ -242,6 +242,8 @@ class Engine extends Sprite
 	/** @private Event handler for stage entry. */
 	private function onStage(?e:Event)
 	{
+		_scene = new Scene();
+
 		// remove event listener
 #if flash
 		if (e != null)
@@ -396,12 +398,10 @@ class Engine extends Sprite
 			_scene.end();
 			_scene.updateLists();
 			if (_scene.autoClear && _scene.hasTween) _scene.clearTweens();
-			if (contains(_scene.sprite)) removeChild(_scene.sprite);
 
 			_scene = _scenes[_scenes.length - 1];
 
 			addChild(_scene.sprite);
-			HXP.camera = _scene.camera;
 			_scene.updateLists();
 			_scene.begin();
 			_scene.updateLists();
@@ -424,7 +424,9 @@ class Engine extends Sprite
 	 */
 	public function popScene():Scene
 	{
-		return _scenes.pop();
+		var scene = _scenes.pop();
+		if (contains(scene.sprite)) removeChild(scene.sprite);
+		return scene;
 	}
 
 	/**
@@ -445,7 +447,7 @@ class Engine extends Sprite
 	}
 
 	// Scene information.
-	private var _scene:Scene = new Scene();
+	private var _scene:Scene;
 	private var _scenes:Array<Scene> = new Array<Scene>();
 
 	// Timing information.
