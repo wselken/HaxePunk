@@ -13,7 +13,10 @@ import openfl.gl.GLProgram;
 #if lime
 import lime.math.Matrix4 as Matrix3D;
 import lime.utils.Float32Array;
-import lime.utils.UInt32Array;import openfl._internal.renderer.opengl.GLRenderer;
+import lime.utils.UInt32Array;
+#if !flash
+import openfl._internal.renderer.opengl.GLRenderer;
+#end
 #elseif nme
 import nme.geom.Matrix3D;
 import nme.utils.Float32Array;
@@ -159,7 +162,7 @@ class HardwareRenderer
 			var smooth:Bool = drawCommand.smooth;
 
 			var tx:Float, ty:Float, rx:Float, ry:Float, rw:Float, rh:Float, a:Float, b:Float, c:Float, d:Float,
-				uvx:Float, uvy:Float, uvx2:Float, uvy2:Float,
+				uvx:Float = 0, uvy:Float = 0, uvx2:Float = 0, uvy2:Float = 0,
 				red:Float, green:Float, blue:Float, alpha:Float;
 
 			// expand arrays if necessary
@@ -277,11 +280,11 @@ class HardwareRenderer
 
 			if (texture != null)
 			{
-				#if lime
+				#if (lime && !flash)
 				var renderer:GLRenderer = cast HXP.stage.__renderer;
 				var renderSession = renderer.renderSession;
 				GL.bindTexture(GL.TEXTURE_2D, texture.getTexture(renderSession.gl));
-				#else
+				#elseif nme
 				GL.bindBitmapDataTexture(texture);
 				#end
 				if (smooth)
