@@ -4,6 +4,7 @@ import flash.display.BitmapData;
 import flash.display.Sprite;
 import flash.geom.Point;
 import flash.geom.Rectangle;
+import haxepunk.ds.Bounds;
 import haxepunk.graphics.atlas.AtlasData;
 import haxepunk.graphics.atlas.CameraSprite;
 import haxepunk.utils.Color;
@@ -39,7 +40,29 @@ class Camera extends Point
 	inline function get_height() return (_height == 0 ? HXP.height : _height);
 	inline function set_height(h:Int) return _height = h;
 
+	/**
+	 * Target that will be followed automatically by this camera.
+	 */
+	public var target:Null<Entity>;
+
+	/**
+	 * Limits the extent of camera zoom.
+	 */
+	public var scaleBounds:Bounds = new Bounds();
+	/**
+	 * Limits the extend of camera scrolling.
+	 */
+	public var scrollBounds:Bounds = new Bounds();
+
+	/**
+	 * Whether this camera should be rendered.
+	 */
 	public var visible:Bool = true;
+
+	/**
+	 * Whether to floor this camera's scroll coordinates before rendering.
+	 */
+	public var pixelSnap:Bool = true;
 
 	/**
 	 * Sprite used to store layer sprites when RenderMode.HARDWARE is set.
@@ -87,7 +110,47 @@ class Camera extends Point
 		renderList = new RenderList();
 	}
 
+	public function center(x:Float, y:Float)
+	{
+		this.x = x - HXP.halfWidth;
+		this.y = y - HXP.halfHeight;
+	}
+
+	public function follow(?target:Entity)
+	{
+		this.target = target;
+	}
+
 	public function resize() {}
+
+	public function update()
+	{
+		if (target != null)
+		{
+			adjustFollow(target);
+		}
+
+		scaleX = scaleBounds.clamp(scaleX);
+		scaleY = scaleBounds.clamp(scaleY);
+		x = scrollBounds.clamp(x);
+		y = scrollBounds.clamp(y);
+
+		if (pixelSnap)
+		{
+			x = floorX(x);
+			y = floorY(y);
+		}
+	}
+
+	public inline function floorX(x:Float):Float
+	{
+		return Std.int(x * fullScaleX) / fullScaleX;
+	}
+
+	public inline function floorY(y:Float):Float
+	{
+		return Std.int(y * fullScaleY) / fullScaleY;
+	}
 
 	function render(renderCursor:Bool = false)
 	{
@@ -119,6 +182,12 @@ class Camera extends Point
 		{
 			HXP.cursor.render(this);
 		}
+	}
+
+	function adjustFollow(target:Entity)
+	{
+		// TODO: deadzone, lerp
+		center(target.x, target.y);
 	}
 
 	/**

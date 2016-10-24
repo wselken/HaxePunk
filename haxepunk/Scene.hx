@@ -122,6 +122,10 @@ class Scene extends Tweener
 			}
 			if (e.graphic != null && e.graphic.active) e.graphic.update();
 		}
+		for (camera in cameras)
+		{
+			camera.update();
+		}
 
 		// updates the cursor
 		if (HXP.cursor != null && HXP.cursor.active)
