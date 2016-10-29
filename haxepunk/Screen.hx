@@ -20,7 +20,13 @@ class Screen
 	/**
 	 * Controls how the game scale changes when the window is resized.
 	 */
-	public var scaleMode:ScaleMode = new ScaleMode();
+	public var scaleMode(default, set):ScaleMode = new ScaleMode();
+	inline function set_scaleMode(s:ScaleMode)
+	{
+		scaleMode = s;
+		scaleMode.resize(HXP.stage.stageWidth, HXP.stage.stageHeight);
+		return s;
+	}
 
 	/**
 	 * Constructor.

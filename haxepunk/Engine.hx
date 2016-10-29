@@ -440,7 +440,7 @@ class Engine extends Sprite
 		if (_scene == value) return value;
 		if (_scenes.length > 0)
 		{
-			_scenes.pop();
+			popScene();
 		}
 		_scenes.push(value);
 		return _scene;

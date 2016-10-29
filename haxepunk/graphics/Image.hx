@@ -84,7 +84,7 @@ class Image extends Graphic
 	public function new(?source:ImageType, ?clipRect:Rectangle)
 	{
 		super();
-		init();
+		_init();
 
 		// check if the _source or _region were set in a higher class
 		if (source != null)
@@ -126,7 +126,7 @@ class Image extends Graphic
 	}
 
 	/** @private Initialize variables */
-	private inline function init()
+	private inline function _init()
 	{
 		angle = 0;
 		scale = scaleX = scaleY = 1;
@@ -149,7 +149,7 @@ class Image extends Graphic
 
 	/** Renders the image. */
 	@:dox(hide)
-	override public function render(target:BitmapData, point:Point, camera:Point)
+	override public function render(target:BitmapData, point:Point, camera:Camera)
 	{
 		var sx = scale * scaleX,
 			sy = scale * scaleY;
@@ -183,7 +183,7 @@ class Image extends Graphic
 	}
 
 	@:dox(hide)
-	override public function renderAtlas(layer:Int, point:Point, camera:Point)
+	override public function renderAtlas(layer:Int, point:Point, camera:Camera)
 	{
 		var sx = scale * scaleX,
 			sy = scale * scaleY,
@@ -577,33 +577,33 @@ class Image extends Graphic
 	/**
 	 * Width of the image.
 	 */
-	public var width(get_width, never):Int;
+	public var width(get, never):Int;
 	private function get_width():Int return Std.int(blit ? _bufferRect.width : (!_region.rotated ? _region.width : _region.height)); 
 
 	/**
 	 * Height of the image.
 	 */
-	public var height(get_height, never):Int;
+	public var height(get, never):Int;
 	private function get_height():Int return Std.int(blit ? _bufferRect.height : (!_region.rotated ? _region.height : _region.width)); 
 
 	/**
 	 * The scaled width of the image.
 	 */
-	public var scaledWidth(get_scaledWidth, set_scaledWidth):Float;
+	public var scaledWidth(get, set_scaledWidth):Float;
 	private inline function get_scaledWidth():Float return width * scaleX * scale; 
 	private inline function set_scaledWidth(w:Float):Float return scaleX = w / scale / width;
 
 	/**
 	 * The scaled height of the image.
 	 */
-	public var scaledHeight(get_scaledHeight, set_scaledHeight):Float;
+	public var scaledHeight(get, set_scaledHeight):Float;
 	private inline function get_scaledHeight():Float return height * scaleY * scale; 
 	private inline function set_scaledHeight(h:Float):Float return scaleY = h / scale / height;
 
 	/**
 	 * Clipping rectangle for the image.
 	 */
-	public var clipRect(get_clipRect, null):Rectangle;
+	public var clipRect(get, null):Rectangle;
 	private inline function get_clipRect():Rectangle return _sourceRect; 
 
 	// Source and buffer information.

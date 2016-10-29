@@ -203,7 +203,7 @@ class Graphic
 	 * @param  camera     The camera offset.
 	 */
 	@:dox(hide)
-	public function render(target:BitmapData, point:Point, camera:Point) {}
+	public function render(target:BitmapData, point:Point, camera:Camera) {}
 
 	/**
 	 * Renders the graphic as an atlas.
@@ -212,7 +212,7 @@ class Graphic
 	 * @param  camera     The camera offset.
 	 */
 	@:dox(hide)
-	public function renderAtlas(layer:Int, point:Point, camera:Point) {}
+	public function renderAtlas(layer:Int, point:Point, camera:Camera) {}
 
 	/**
 	 * Pause updating this graphic.

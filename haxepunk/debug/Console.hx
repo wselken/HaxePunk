@@ -173,7 +173,7 @@ class Console
 	}
 
 	/**
-	 * Show the console, no effect if the console insn't hidden.
+	 * Show the console, no effect if the console isn't hidden.
 	 */
 	public function show()
 	{
@@ -576,6 +576,20 @@ class Console
 			HXP.cursor = null;
 			HXP.cursor = cursor;
 		}
+
+		if (_paused)
+		{
+			// make sure the native cursor is shown
+			Input.showCursor();
+		}
+		else
+		{
+			// restore any custom cursor
+			var cursor = HXP.cursor;
+			HXP.cursor = null;
+			HXP.cursor = cursor;
+		}
+
 		return _paused;
 	}
 

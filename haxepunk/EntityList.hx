@@ -159,5 +159,14 @@ class EntityList<T:Entity> extends Entity
 		_recycled.clear();
 	}
 
+	override function set_cameras(cameras:Array<Camera>)
+	{
+		for (entity in entities)
+		{
+			entity.cameras = cameras;
+		}
+		return super.set_cameras(cameras);
+	}
+
 	var _recycled:List<T>;
 }

@@ -636,26 +636,6 @@ class HXP
 		}
 	}
 
-	/**
-	 * Resize the stage, not available on flash or html5.
-	 *
-	 * @param	width	New width.
-	 * @param	height	New height.
-	 */
-	public static function resizeStage(width:Int, height:Int)
-	{
-		#if (cpp || neko)
-		#if (lime && !lime_legacy)
-		openfl.Lib.application.window.resize(width, height);
-		#else
-		HXP.stage.resize(width, height);
-		#end
-		resize(width, height);
-		#elseif debug
-		trace("Can only resize the stage in cpp or neko targets.");
-		#end
-	}
-
 	public static var time(null, set):Float;
 	private static inline function set_time(value:Float):Float
 	{

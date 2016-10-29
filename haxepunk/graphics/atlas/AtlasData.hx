@@ -39,17 +39,6 @@ class AtlasData
 	public var height(default, null):Int;
 	public var bitmapData:BitmapData;
 
-	public static inline var BLEND_NONE:Int = 0;
-	public static inline var BLEND_ADD:Int = Tilesheet.TILE_BLEND_ADD;
-	public static inline var BLEND_NORMAL:Int = Tilesheet.TILE_BLEND_NORMAL;
-#if flash
-	public static inline var BLEND_MULTIPLY:Int = BLEND_NONE;
-	public static inline var BLEND_SCREEN:Int = BLEND_NONE;
-#else
-	public static inline var BLEND_MULTIPLY:Int = Tilesheet.TILE_BLEND_MULTIPLY;
-	public static inline var BLEND_SCREEN:Int = Tilesheet.TILE_BLEND_SCREEN;
-#end
-
 	/**
 	 * Creates a new AtlasData class
 	 * 
@@ -239,7 +228,7 @@ class AtlasData
 		command.add(rect.x, rect.y, rect.width, rect.height, a, b, c, d, tx, ty, red, green, blue, alpha);
 	}
 
-	public var blend:BlendMode = BlendMode.Alpha;
+	public var blend:BlendMode = BlendMode.Normal;
 
 	// used for pooling
 	private var _name:String;

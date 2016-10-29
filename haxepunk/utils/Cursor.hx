@@ -1,7 +1,7 @@
 package haxepunk.utils;
 
-import com.haxepunk.Graphic;
-import com.haxepunk.graphics.Image;
+import haxepunk.Graphic;
+import haxepunk.graphics.Image;
 
 class Cursor extends Entity
 {

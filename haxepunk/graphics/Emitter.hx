@@ -124,7 +124,7 @@ class Emitter extends Graphic
 		_particle = null;
 	}
 
-	private inline function renderParticles(renderFunc:Void->Void, point:Point, camera:Point)
+	private inline function renderParticles(renderFunc:Void->Void, point:Point, camera:Camera)
 	{
 		// quit if there are no particles
 		if (_particle == null)
@@ -194,14 +194,14 @@ class Emitter extends Graphic
 		}
 	}
 
-	override public function render(target:BitmapData, point:Point, camera:Point)
+	override public function render(target:BitmapData, point:Point, camera:Camera)
 	{
 		renderParticles(function() _source.render(target, point, camera), point, camera);
 
 		super.render(target, point, camera);
 	}
 
-	override public function renderAtlas(layer:Int, point:Point, camera:Point)
+	override public function renderAtlas(layer:Int, point:Point, camera:Camera)
 	{
 		renderParticles(function() _source.renderAtlas(layer, point, camera), point, camera);
 

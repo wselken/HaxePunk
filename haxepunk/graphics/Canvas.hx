@@ -94,7 +94,7 @@ class Canvas extends Graphic
 
 	/** @private Renders the canvas. */
 	@:dox(hide)
-	override public function render(target:BitmapData, point:Point, camera:Point)
+	override public function render(target:BitmapData, point:Point, camera:Camera)
 	{
 		var sx = scale * scaleX,
 			sy = scale * scaleY;
@@ -310,29 +310,6 @@ class Canvas extends Graphic
 	}
 
 	/**
-	 * Draws the Graphic object to the canvas.
-	 * @param	x			X position to draw.
-	 * @param	y			Y position to draw.
-	 * @param	source		Graphic to draw.
-	 */
-	public function drawGraphic(x:Int, y:Int, source:Graphic)
-	{
-		var xx:Int = 0, yy:Int = 0;
-		for (buffer in _buffers)
-		{
-			_point.x = x - xx;
-			_point.y = y - yy;
-			source.render(buffer, _point, HXP.zero);
-			xx += _maxWidth;
-			if (xx >= _width)
-			{
-				xx = 0;
-				yy += _maxHeight;
-			}
-		}
-	}
-
-	/**
 	 * The tinted color of the Canvas. Use 0xFFFFFF to draw the it normally.
 	 */
 	public var color(get, set):Color;
@@ -383,16 +360,6 @@ class Canvas extends Graphic
 		_tint.alphaMultiplier = _alpha;
 		_redrawBuffers = true;
 		return _alpha;
-	}
-
-	/**
-	 * Shifts the canvas' pixels by the offset.
-	 * @param	x	Horizontal shift.
-	 * @param	y	Vertical shift.
-	 */
-	public function shift(x:Int = 0, y:Int = 0)
-	{
-		drawGraphic(x, y, this);
 	}
 
 	/**

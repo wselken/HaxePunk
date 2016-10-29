@@ -440,7 +440,7 @@ class Tilemap extends Canvas
 	}
 
 	@:dox(hide)
-	override public function renderAtlas(layer:Int, point:Point, camera:Point)
+	override public function renderAtlas(layer:Int, point:Point, camera:Camera)
 	{
 		// determine drawing location
 		_point.x = point.x + x - camera.x * scrollX;

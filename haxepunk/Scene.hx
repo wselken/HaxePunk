@@ -39,7 +39,26 @@ class Scene extends Tweener
 	/**
 	 * All cameras available in the scene.
 	 */
-	public var cameras:Array<Camera>;
+	public var cameras(default, set):Array<Camera>;
+	inline function set_cameras(c:Array<Camera>)
+	{
+		if (cameras != null)
+		{
+			for (camera in cameras)
+			{
+				removeCamera(camera);
+			}
+		}
+		else
+		{
+			cameras = new Array();
+		}
+		for (camera in c)
+		{
+			addCamera(camera);
+		}
+		return c;
+	}
 
 	public var width:Int = 0;
 	public var height:Int = 0;
@@ -51,7 +70,7 @@ class Scene extends Tweener
 	{
 		super();
 		visible = true;
-		camera = new Camera(this);
+		camera = new Camera();
 		sprite = new Sprite();
 		cameras = new Array();
 
@@ -91,6 +110,10 @@ class Scene extends Tweener
 			for (e in _update)
 			{
 				e.resized();
+			}
+			for (camera in cameras)
+			{
+				camera.resized();
 			}
 		}
 	}
@@ -161,7 +184,12 @@ class Scene extends Tweener
 	{
 		for (camera in cameras)
 		{
-			camera.render(camera == this.camera);
+			camera.render();
+		}
+
+		if (HXP.cursor != null && HXP.cursor.visible)
+		{
+			HXP.cursor.render(camera);
 		}
 	}
 
@@ -282,13 +310,14 @@ class Scene extends Tweener
 	public function addCamera(camera:Camera)
 	{
 		cameras.push(camera);
-		sprite.addChild(camera.sprite);
+		camera.scene = this;
+		camera.added();
 	}
 
 	public function removeCamera(camera:Camera)
 	{
 		cameras.remove(camera);
-		sprite.removeChild(camera.sprite);
+		camera.removed();
 	}
 
 	/**

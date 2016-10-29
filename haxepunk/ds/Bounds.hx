@@ -18,7 +18,7 @@ abstract Bounds(BoundsData)
 		this = {min:min, max:max};
 	}
 
-	public inline function setTo(?min:Float, ?max:Float):Bounds
+	public inline function set(?min:Float, ?max:Float):Bounds
 	{
 		this.min = min;
 		this.max = max;

@@ -5,9 +5,11 @@ import flash.geom.Matrix;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import haxepunk.HXP;
+import haxepunk.Camera;
 import haxepunk.RenderMode;
 import haxepunk.Graphic;
 import haxepunk.graphics.Image;
+import haxepunk.utils.Color;
 
 /**
  * Automatic scaling 9-slice graphic.
@@ -18,6 +20,9 @@ class NineSlice extends Graphic
 	public var height:Float;
 	public var clipRect:Rectangle;
 	public var smooth:Bool = false;
+
+	public var color:Color = 0xFFFFFF;
+	public var alpha:Float = 1;
 
 	var source:ImageType;
 
@@ -68,50 +73,56 @@ class NineSlice extends Graphic
 	 * @param	height	New height
 	 * @return
 	 */
-	function renderSegments(renderFunc:Image -> Void)
+	function renderSegments(renderFunc:Image -> Void, camera:Camera)
 	{
-		var leftWidth:Float = Std.int(_sliceRect.left / HXP.screen.fullScaleX),
-			rightWidth:Float = Std.int((source.width - _sliceRect.width) / HXP.screen.fullScaleX),
-			centerWidth:Float = Std.int(width - leftWidth - rightWidth);
-		var topHeight:Float = Std.int(_sliceRect.top / HXP.screen.fullScaleY),
-			bottomHeight:Float = Std.int((source.height - _sliceRect.height) / HXP.screen.fullScaleY),
-			centerHeight:Float = Std.int(height - topHeight - bottomHeight);
+		var x0 = camera.floorX(this.x),
+			y0 = camera.floorY(this.y);
+		var w = Std.int(width * camera.fullScaleX) / camera.fullScaleX,
+			h = Std.int(height * camera.fullScaleY) / camera.fullScaleY;
+		var leftWidth:Float = Std.int(Math.min(_sliceRect.left, w / 2)) / camera.fullScaleX,
+			rightWidth:Float = Math.max(0, Math.min(Std.int((source.width - _sliceRect.width)) / camera.fullScaleX, w - leftWidth)),
+			centerWidth:Float = w - leftWidth - rightWidth;
+		var topHeight:Float = Std.int(Math.min(_sliceRect.top, h / 2)) / camera.fullScaleY,
+			bottomHeight:Float = Math.max(0, Math.min(Std.int((source.height - _sliceRect.height)) / camera.fullScaleY, h - topHeight)),
+			centerHeight:Float = h - topHeight - bottomHeight;
 
-		var leftX = 0, centerX = leftWidth, rightX = leftWidth + centerWidth,
-			topY = 0, centerY = topHeight, bottomY = topHeight + centerHeight;
+		var leftX = x0, centerX = x0 + leftWidth, rightX = centerX + centerWidth,
+			topY = y0, centerY = y0 + topHeight, bottomY = centerY + centerHeight;
 
-		drawSegment(renderFunc, topL, leftX, topY, leftWidth, topHeight);
-		drawSegment(renderFunc, topC, centerX, topY, centerWidth, topHeight);
-		drawSegment(renderFunc, topR, rightX, topY, rightWidth, topHeight);
-		drawSegment(renderFunc, medL, leftX, centerY, leftWidth, centerHeight);
-		drawSegment(renderFunc, medC, centerX, centerY, centerWidth, centerHeight);
-		drawSegment(renderFunc, medR, rightX, centerY, rightWidth, centerHeight);
-		drawSegment(renderFunc, botL, leftX, bottomY, leftWidth, bottomHeight);
-		drawSegment(renderFunc, botC, centerX, bottomY, centerWidth, bottomHeight);
-		drawSegment(renderFunc, botR, rightX, bottomY, rightWidth, bottomHeight);
+		drawSegment(renderFunc, topL, leftX, topY, leftWidth, topHeight, camera);
+		drawSegment(renderFunc, topC, centerX, topY, centerWidth, topHeight, camera);
+		drawSegment(renderFunc, topR, rightX, topY, rightWidth, topHeight, camera);
+		drawSegment(renderFunc, medL, leftX, centerY, leftWidth, centerHeight, camera);
+		drawSegment(renderFunc, medC, centerX, centerY, centerWidth, centerHeight, camera);
+		drawSegment(renderFunc, medR, rightX, centerY, rightWidth, centerHeight, camera);
+		drawSegment(renderFunc, botL, leftX, bottomY, leftWidth, bottomHeight, camera);
+		drawSegment(renderFunc, botC, centerX, bottomY, centerWidth, bottomHeight, camera);
+		drawSegment(renderFunc, botR, rightX, bottomY, rightWidth, bottomHeight, camera);
 	}
 
-	inline function drawSegment(renderFunc:Image -> Void, segment:Image, x:Float, y:Float, width:Float, height:Float)
+	inline function drawSegment(renderFunc:Image -> Void, segment:Image, x:Float, y:Float, width:Float, height:Float, camera:Camera)
 	{
 		if (segment != null && segment.visible)
 		{
-			segment.x = this.x + x;
-			segment.y = this.y + y;
+			segment.x = x;
+			segment.y = y;
 			segment.scaleX = width / segment.width;
 			segment.scaleY = height / segment.height;
 			segment.smooth = this.smooth;
+			segment.alpha = this.alpha;
+			segment.color = this.color;
 			renderFunc(segment);
 		}
 	}
 
-	override public function render(target:BitmapData, point:Point, camera:Point)
+	override public function render(target:BitmapData, point:Point, camera:Camera)
 	{
-		renderSegments(function(segment:Image) segment.render(target, point, camera));
+		renderSegments(function(segment:Image) segment.render(target, point, camera), camera);
 	}
 
-	override public function renderAtlas(layer:Int, point:Point, camera:Point)
+	override public function renderAtlas(layer:Int, point:Point, camera:Camera)
 	{
-		renderSegments(function(segment:Image) segment.renderAtlas(layer, point, camera));
+		renderSegments(function(segment:Image) segment.renderAtlas(layer, point, camera), camera);
 	}
 
 	var topL:Image;

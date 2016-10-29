@@ -70,6 +70,17 @@ class Entity extends Tweener
 		return y = v;
 	}
 
+	public var camera(get, set):Camera;
+	inline function get_camera() return cameras[0];
+	inline function set_camera(c:Camera)
+	{
+		if (cameras == null || cameras.length != 1 || cameras[0] != c)
+		{
+			this.cameras = [c];
+		}
+		return c;
+	}
+
 	/**
 	 * Cameras this entity should be rendered to. If null, it will use the
 	 * scene's default camera.
@@ -80,7 +91,7 @@ class Entity extends Tweener
 		// FIXME: if scene is null?
 		return _cameras != null ? _cameras : _scene != null ? _scene._defaultCameras : [];
 	}
-	inline function set_cameras(cameras:Array<Camera>)
+	function set_cameras(cameras:Array<Camera>)
 	{
 		if (_scene != null) _scene.removeRender(this);
 		_cameras = cameras;
@@ -182,8 +193,8 @@ class Entity extends Tweener
 		{
 			if (_graphic.relative)
 			{
-				_point.x = x;
-				_point.y = y;
+				_point.x = camera.floorX(x);
+				_point.y = camera.floorY(y);
 			}
 			else _point.x = _point.y = 0;
 			if (graphic.blit)

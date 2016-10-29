@@ -45,6 +45,9 @@ class Camera extends Point
 	 */
 	public var target:Null<Entity>;
 
+	public var targetOffsetX:Float = 0;
+	public var targetOffsetY:Float = 0;
+
 	/**
 	 * Limits the extent of camera zoom.
 	 */
@@ -52,7 +55,8 @@ class Camera extends Point
 	/**
 	 * Limits the extend of camera scrolling.
 	 */
-	public var scrollBounds:Bounds = new Bounds();
+	public var scrollXBounds:Bounds = new Bounds();
+	public var scrollYBounds:Bounds = new Bounds();
 
 	/**
 	 * Whether this camera should be rendered.
@@ -87,25 +91,15 @@ class Camera extends Point
 	 * @param	height		Camera display area's height. 0 to fill the visible area of the screen.
 	 * @param	scale		Camera's initial scale.
 	 */
-	public function new(scene:Scene, displayX:Int = 0, displayY:Int = 0, width:Int = 0, height:Int = 0, scale:Float = 1)
+	public function new(displayX:Int = 0, displayY:Int = 0, width:Int = 0, height:Int = 0, scale:Float = 1)
 	{
 		super(0, 0);
 
-		this.scene = scene;
 		this.displayX = displayX;
 		this.displayY = displayY;
 		_width = width;
 		_height = height;
 		this.scale = scale;
-
-		if (HXP.renderMode == RenderMode.HARDWARE)
-		{
-			sprite = new CameraSprite(this);
-		}
-		else
-		{
-			buffer = new BitmapData(HXP.width, HXP.height);
-		}
 
 		renderList = new RenderList();
 	}
@@ -116,12 +110,35 @@ class Camera extends Point
 		this.y = y - HXP.halfHeight;
 	}
 
-	public function follow(?target:Entity)
+	public function follow(?target:Entity, ?offsetX:Float = 0, ?offsetY:Float = 0)
 	{
 		this.target = target;
+		targetOffsetX = offsetX;
+		targetOffsetY = offsetY;
 	}
 
-	public function resize() {}
+	public function added()
+	{
+		if (HXP.renderMode == RenderMode.HARDWARE)
+		{
+			sprite = new CameraSprite(this);
+		}
+		else
+		{
+			buffer = new BitmapData(HXP.width, HXP.height);
+		}
+		scene.sprite.addChild(sprite);
+	}
+
+	public function removed()
+	{
+		scene.sprite.removeChild(sprite);
+	}
+
+	public function resized()
+	{
+		// TODO
+	}
 
 	public function update()
 	{
@@ -130,15 +147,36 @@ class Camera extends Point
 			adjustFollow(target);
 		}
 
-		scaleX = scaleBounds.clamp(scaleX);
-		scaleY = scaleBounds.clamp(scaleY);
-		x = scrollBounds.clamp(x);
-		y = scrollBounds.clamp(y);
+		scaleX = scaleBounds.clamp(scaleX / scale);
+		scaleY = scaleBounds.clamp(scaleY / scale);
+		x = scrollXBounds.clamp(x);
+		y = scrollYBounds.clamp(y);
 
 		if (pixelSnap)
 		{
 			x = floorX(x);
 			y = floorY(y);
+		}
+
+		if (_shakeTime > 0)
+		{
+			var sx:Int = Std.random(_shakeMagnitude * 2 + 1) - _shakeMagnitude;
+			var sy:Int = Std.random(_shakeMagnitude * 2 + 1) - _shakeMagnitude;
+
+			x += sx - _shakeX;
+			y += sy - _shakeY;
+
+			_shakeX = sx;
+			_shakeY = sy;
+
+			_shakeTime -= HXP.elapsed;
+			if (_shakeTime < 0) _shakeTime = 0;
+		}
+		else if (_shakeX != 0 || _shakeY != 0)
+		{
+			x -= _shakeX;
+			y -= _shakeY;
+			_shakeX = _shakeY = 0;
 		}
 	}
 
@@ -152,13 +190,13 @@ class Camera extends Point
 		return Std.int(y * fullScaleY) / fullScaleY;
 	}
 
-	function render(renderCursor:Bool = false)
+	function render()
 	{
 		sprite.startFrame();
 		if (!visible) return;
 
-		var sx = HXP.screen.fullScaleX,
-			sy = HXP.screen.fullScaleY;
+		var sx = fullScaleX,
+			sy = fullScaleY;
 		sprite.x = displayX * sx;
 		sprite.y = displayY * sy;
 		_scrollRect.width = width * sx;
@@ -177,17 +215,31 @@ class Camera extends Point
 				if (e.visible) e.render(this);
 			}
 		}
-
-		if (renderCursor && HXP.cursor != null && HXP.cursor.visible)
-		{
-			HXP.cursor.render(this);
-		}
 	}
 
 	function adjustFollow(target:Entity)
 	{
 		// TODO: deadzone, lerp
-		center(target.x, target.y);
+		center(target.x + targetOffsetX, target.y + targetOffsetY);
+	}
+
+	/**
+	 * Cause the camera to shake for a specified length of time.
+	 * @param	magnitude	Number of pixels to shake in any direction.
+	 * @param	duration	Duration of shake effect, in seconds.
+	 */
+	public function shake(magnitude:Int = 4, duration:Float = 0.5)
+	{
+		if (_shakeTime < duration) _shakeTime = duration;
+		_shakeMagnitude = magnitude;
+	}
+
+	/**
+	 * Stop the screen from shaking immediately.
+	 */
+	public function shakeStop()
+	{
+		_shakeTime = 0;
 	}
 
 	/**
@@ -212,4 +264,8 @@ class Camera extends Point
 	var _height:Int = 0;
 	var renderList:RenderList;
 	var _scrollRect:Rectangle = new Rectangle();
+	var _shakeTime:Float=0;
+	var _shakeMagnitude:Int=0;
+	var _shakeX:Int=0;
+	var _shakeY:Int=0;
 }

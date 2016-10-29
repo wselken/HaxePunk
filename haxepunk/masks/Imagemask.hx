@@ -9,7 +9,6 @@ import haxepunk.HXP;
 import haxepunk.graphics.Image;
 import haxepunk.utils.MathUtil;
 
-
 /**
  * A bitmap mask used for pixel-perfect collision.
  *
@@ -76,7 +75,7 @@ class Imagemask extends Pixelmask
 		_height = Math.ceil(r.height);
 
 		_data = new BitmapData(_width, _height, true, 0x00000000);
-		_source.render(_data, new Point(-_x, -_y), new Point(0, 0));
+		_source.render(_data, new Point(-_x, -_y), new Camera(0, 0));
 
 		super.update();
 	}
