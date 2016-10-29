@@ -4,7 +4,6 @@ package haxepunk.graphics.atlas;
 abstract BlendMode(Int) from Int to Int
 {
 	var Add = 0;
-	var Alpha = 1;
 	var Multiply = 9;
 	var Normal = 10;
 	var Screen = 12;

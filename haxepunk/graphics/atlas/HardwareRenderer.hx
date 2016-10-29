@@ -305,6 +305,25 @@ class HardwareRenderer
 				glIndexes = GL.createBuffer();
 			}
 
+			switch (drawCommand.blend)
+			{
+				case BlendMode.Add:
+					GL.blendEquation(GL.FUNC_ADD);
+					GL.blendFunc(GL.ONE, GL.ONE);
+				case BlendMode.Multiply:
+					GL.blendEquation(GL.FUNC_ADD);
+					GL.blendFunc(GL.DST_COLOR, GL.ONE_MINUS_SRC_ALPHA);
+				case BlendMode.Screen:
+					GL.blendEquation(GL.FUNC_ADD);
+					GL.blendFunc(GL.ONE, GL.ONE_MINUS_SRC_COLOR);
+				case BlendMode.Subtract:
+					GL.blendEquation(GL.FUNC_REVERSE_SUBTRACT);
+					GL.blendFunc(GL.ONE, GL.ONE);
+				default:
+					GL.blendEquation(GL.FUNC_ADD);
+					GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
+			}
+
 			GL.bindBuffer(GL.ARRAY_BUFFER, glBuffer);
 			GL.bufferData(GL.ARRAY_BUFFER, buffer, GL.DYNAMIC_DRAW);
 
