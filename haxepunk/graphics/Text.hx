@@ -1,14 +1,18 @@
 package haxepunk.graphics;
 
 import haxe.ds.StringMap;
+import flash.display.BitmapData;
+import flash.geom.ColorTransform;
+import flash.geom.Matrix;
+import flash.geom.Point;
 import flash.text.TextField;
 import flash.text.TextFormat;
 import flash.text.TextFormatAlign;
 import openfl.Assets;
 import haxepunk.HXP;
 import haxepunk.graphics.atlas.Atlas;
+import haxepunk.graphics.atlas.AtlasRegion;
 import haxepunk.utils.Color;
-
 
 /**
  * Text option including the font, size, color...
@@ -35,7 +39,30 @@ typedef TextOptions =
 	@:optional var leading:Int;
 	/** Optional. If the text field uses a rich text string. */
 	@:optional var richText:Bool;
+	/** Optional. If the text should draw a border. */
+	@:optional var border:BorderOptions;
 };
+
+@:enum
+abstract BorderStyle(Int) from Int to Int
+{
+	/* Draws a thick shadow down and to the right. */
+	var Shadow = 1;
+	/* Draws a shadow using only one draw call. */
+	var FastShadow = 2;
+	/* Outlines the text on all sides. */
+	var Outline = 3;
+	/* A fast outline in four draw calls. */
+	var FastOutline = 4;
+}
+
+typedef BorderOptions =
+{
+	var style:BorderStyle;
+	var size:Int;
+	var color:Color;
+	var alpha:Float;
+}
 
 /**
  * Abstract representing either a `TextFormat` or a `TextOptions`.
@@ -44,7 +71,7 @@ typedef TextOptions =
  */
 abstract StyleType(TextFormat)
 {
-	private function new(format:TextFormat) this = format;
+	function new(format:TextFormat) this = format;
 	@:dox(hide) @:to public function toTextformat():TextFormat return this;
 
 	@:dox(hide) @:from public static inline function fromTextFormat(format:TextFormat) return new StyleType(format);
@@ -90,6 +117,49 @@ class Text extends Image
 	public var textHeight(default, null):Int;
 
 	/**
+	 * If set, configuration for text border.
+	 */
+	var border(default, set):Null<BorderOptions>;
+	inline function set_border(options:Null<BorderOptions>):Null<BorderOptions>
+	{
+		this.border = options;
+		if (options != null && options.alpha > 0 && _borderBuffer == null)
+		{
+			// create a second buffer for the border, to allow independently
+			// changing its alpha/color without a full buffer update
+			_borderBuffer = HXP.createBitmap(
+				Std.int(_sourceRect.width + bufferMargin * 2),
+				Std.int(_sourceRect.height + bufferMargin * 2),
+				true
+			);
+			_borderSource = _borderBuffer.clone();
+			_borderRegion = Atlas.loadImageAsRegion(_borderSource);
+		}
+		_needsUpdate = true;
+		return options;
+	}
+
+	/*override function set_alpha(value:Float):Float
+	{
+		value = value < 0 ? 0 : (value > 1 ? 1 : value);
+		if (_alpha == value) return value;
+		_alpha = value;
+		updateColorTransform();
+		return _alpha;
+	}
+
+	override function set_color(value:Color):Color
+	{
+		value &= 0xFFFFFF;
+		if (_color == value) return value;
+		_color = value;
+		// save individual color channel values
+		_red = _green = _blue = 1;
+		updateColorTransform();
+		return _color;
+	}*/
+
+	/**
 	 * Text constructor.
 	 * @param text    Text to display.
 	 * @param x       X offset.
@@ -118,6 +188,7 @@ class Text extends Image
 		if (!Reflect.hasField(options, "resizable")) options.resizable = true;
 		if (!Reflect.hasField(options, "wordWrap"))  options.wordWrap  = false;
 		if (!Reflect.hasField(options, "leading"))   options.leading   = 0;
+		if (!Reflect.hasField(options, "border"))    options.border   = null;
 
 		var fontObj = Assets.getFont(options.font);
 		_format = new TextFormat(fontObj.fontName, options.size, 0xFFFFFF);
@@ -154,12 +225,14 @@ class Text extends Image
 		}
 
 		blit = HXP.renderMode == RenderMode.BUFFER;
-		updateTextBuffer();
 
-		this.size = options.size;
-		this.color = options.color;
 		this.x = x;
 		this.y = y;
+		this.border = options.border;
+		this.size = options.size;
+		this.color = options.color;
+
+		_needsUpdate = true;
 	}
 
 	/**
@@ -176,10 +249,10 @@ class Text extends Image
 	public function addStyle(tagName:String, params:StyleType):Void
 	{
 		_styles.set(tagName, params);
-		if (_richText != null) updateTextBuffer();
+		if (_richText != null) _needsUpdate = true;
 	}
 
-	override private function updateColorTransform():Void
+	override function updateColorTransform():Void
 	{
 		if (_richText != null)
 		{
@@ -199,23 +272,17 @@ class Text extends Image
 				_tint.alphaMultiplier = _alpha;
 			}
 
-			if (_format.color != _color)
-			{
-				updateTextBuffer();
-			}
-			else
-			{
-				updateBuffer();
-			}
+			_needsUpdate = true;
 		}
 		else
 		{
 			super.updateColorTransform();
+			if (_tint != null) _tint.alphaMultiplier = 1;
 		}
 	}
-	
-	private static var tag_re = ~/<([^>]+)>([^(?:<\/)]+)<\/[^>]+>/g;
-	private function matchStyles()
+
+	static var tag_re = ~/<([^>]+)>([^(<\/)]+)<\/[^>]+>/g;
+	function matchStyles()
 	{
 		_text = _richText;
 
@@ -252,58 +319,117 @@ class Text extends Image
 	}
 
 	/** @private Updates the drawing buffer. */
-	private function updateTextBuffer()
+	function updateTextBuffer()
 	{
-		if (_richText == null)
+		_needsUpdate = false;
+
+		if (_richText != null)
 		{
-			_format.color = 0xFFFFFF;
-			_field.setTextFormat(_format);
-		}
-		else
-		{
-			_format.color = _color;
 			matchStyles();
 		}
 
 		_field.width = _width;
-		_field.width = textWidth = Math.ceil(_field.textWidth + 4);
-		_field.height = textHeight = Math.ceil(_field.textHeight + 4);
+		_field.width = textWidth = Math.ceil(_field.textWidth + bufferMargin * 2);
+		_field.height = textHeight = Math.ceil(_field.textHeight + bufferMargin * 2);
 
 		if (resizable && (textWidth > _width || textHeight > _height))
 		{
-			if (_width < textWidth) _width = textWidth;
-			if (_height < textHeight) _height = textHeight;
+			if (_width < textWidth) _width = textWidth + Std.int(bufferMargin * 2);
+			if (_height < textHeight) _height = textHeight + Std.int(bufferMargin * 2);
 		}
 
 		if (_width > _source.width || _height > _source.height)
 		{
-			_source = HXP.createBitmap(
-				Std.int(Math.max(_width, _source.width)),
-				Std.int(Math.max(_height, _source.height)),
-				true);
-
-			_sourceRect = _source.rect;
-			createBuffer();
-
-			if (!blit)
-			{
-				if (_region != null)
-				{
-					_region.destroy();
-				}
-				_region = Atlas.loadImageAsRegion(_source);
-			}
+			resize(_width, _height, false);
 		}
 		else
 		{
 			_source.fillRect(_sourceRect, 0);
+			if (border != null && border.alpha > 0) _source.fillRect(_sourceRect, 0);
 		}
 
 		_field.width = _width;
 		_field.height = _height;
 
-		_source.draw(_field);
-		super.updateBuffer();
+		updateBuffer(true);
+		if (!blit)
+		{
+			if (border != null && border.alpha > 0)
+			{
+				_borderSource.draw(_borderBuffer);
+			}
+			_source.draw(_buffer);
+		}
+	}
+
+	override function createBuffer()
+	{
+		if (_buffer != null) _buffer.dispose();
+		_buffer = HXP.createBitmap(
+			Std.int(_sourceRect.width + bufferMargin * 2),
+			Std.int(_sourceRect.height + bufferMargin * 2),
+			true
+		);
+		if (_borderBuffer != null)
+		{
+			_borderBuffer.dispose();
+			_borderBuffer = _buffer.clone();
+		}
+		_bufferRect = _buffer.rect;
+		_bitmap.bitmapData = _buffer;
+	}
+
+	/**
+	 * Updates the image buffer.
+	 */
+	@:dox(hide)
+	override public function updateBuffer(clearBefore:Bool = false)
+	{
+		if (clearBefore)
+		{
+			_buffer.fillRect(_bufferRect, 0);
+			if (border != null && border.alpha > 0) _borderBuffer.fillRect(_bufferRect, 0);
+		}
+		if (_source == null) return;
+
+		_matrix.setTo(1, 0, 0, 1, bufferMargin, bufferMargin);
+
+		if (border != null)
+		{
+			_borderBuffer.draw(_field, _matrix, _whiteTint);
+
+			inline function drawBorder(ox, oy)
+			{
+				_offset.setTo(ox, oy);
+				_borderBuffer.copyPixels(_borderBuffer, _bufferRect, _offset, true);
+			}
+			switch (border.style)
+			{
+				case FastShadow:
+					drawBorder(border.size, border.size);
+				case Shadow:
+					for (_ in 0 ... border.size)
+					{
+						drawBorder(1, 0);
+						drawBorder(0, 1);
+					}
+				case FastOutline:
+					drawBorder(0, -border.size);
+					drawBorder(-border.size, 0);
+					drawBorder(border.size, 0);
+					drawBorder(0, border.size);
+				case Outline:
+					for (_ in 0 ... border.size)
+					{
+						drawBorder(0, -1);
+						drawBorder(-1, 0);
+						drawBorder(1, 0);
+						drawBorder(0, 1);
+					}
+			}
+		}
+
+		_buffer.draw(_field, _matrix, _tint);
 	}
 
 	/**
@@ -317,23 +443,64 @@ class Text extends Image
 		}
 	}
 
+	public function resize(width:Int, height:Int, ?redraw:Bool = true)
+	{
+		_width = width;
+		_height = height;
+
+		if (_width > _source.width || _height > _source.height)
+		{
+			_source = HXP.createBitmap(
+				Std.int(Math.max(_width, _source.width)),
+				Std.int(Math.max(_height, _source.height)),
+				true
+			);
+
+			_sourceRect = _source.rect;
+
+			if (border != null && border.alpha > 0)
+			{
+				_borderSource = HXP.createBitmap(
+					Std.int(Math.max(_width, _source.width)),
+					Std.int(Math.max(_height, _source.height)),
+					true
+				);
+			}
+
+			createBuffer();
+
+			if (!blit)
+			{
+				if (_region != null)
+				{
+					_region.destroy();
+				}
+				_region = Atlas.loadImageAsRegion(_source);
+
+				if (_borderRegion != null)
+				{
+					_borderRegion.destroy();
+					_borderRegion = Atlas.loadImageAsRegion(_borderSource);
+				}
+			}
+		}
+		if (redraw) updateBuffer();
+	}
+
 	/**
 	 * Text string.
 	 */
 	public var text(get, set):String;
-	private inline function get_text():String return _text; 
-	private function set_text(value:String):String
+	inline function get_text():String return _text;
+	function set_text(value:String):String
 	{
 		if (_text == value && _richText == null) return value;
 		_field.text = _text = value;
-		if (_richText == null)
-		{
-			updateTextBuffer();
-		}
-		else
+		if (_richText != null)
 		{
 			updateColorTransform();
 		}
+		_needsUpdate = true;
 		return value;
 	}
 
@@ -343,8 +510,8 @@ class Text extends Image
 	 * Use `Text.addStyle` to control the appearance of marked-up text.
 	 */
 	public var richText(get, set):String;
-	private function get_richText():String return (_richText == null ? _text : _richText); 
-	private function set_richText(value:String):String
+	function get_richText():String return (_richText == null ? _text : _richText);
+	function set_richText(value:String):String
 	{
 		if (_richText == value) return value;
 		var fromPlain = (_richText == null);
@@ -358,7 +525,7 @@ class Text extends Image
 		}
 		else
 		{
-			updateTextBuffer();
+			_needsUpdate = true;
 		}
 		return value;
 	}
@@ -407,21 +574,31 @@ class Text extends Image
 			}
 		}
 		if (!propertyFound) return false;
-		
-		updateTextBuffer();
+
+		_needsUpdate = true;
 		return true;
+	}
+
+	public function setBorder(?style:BorderStyle = BorderStyle.FastOutline, ?size:Int = 1, ?color:Color = Color.Black, ?alpha:Float = 1)
+	{
+		border = {
+			style: style,
+			size: size,
+			color: color,
+			alpha: alpha,
+		};
 	}
 
 	/**
 	 * Font family.
 	 */
 	public var font(default, set):String;
-	private function set_font(value:String):String
+	function set_font(value:String):String
 	{
 		if (font == value) return value;
 		value = Assets.getFont(value).fontName;
 		_format.font = font = value;
-		updateTextBuffer();
+		_needsUpdate = true;
 		return value;
 	}
 
@@ -429,11 +606,11 @@ class Text extends Image
 	 * Font size.
 	 */
 	public var size(default, set):Int;
-	private function set_size(value:Int):Int
+	function set_size(value:Int):Int
 	{
 		if (size == value) return value;
 		_format.size = size = value;
-		updateTextBuffer();
+		_needsUpdate = true;
 		return value;
 	}
 
@@ -442,15 +619,15 @@ class Text extends Image
 	 */
 #if (flash || js || !openfl_legacy)
 	public var align(default, set):TextFormatAlign;
-	private function set_align(value:TextFormatAlign):TextFormatAlign
+	function set_align(value:TextFormatAlign):TextFormatAlign
 #else
 	public var align(default, set):String;
-	private function set_align(value:String):String
+	function set_align(value:String):String
 #end
 	{
 		if (align == value) return value;
 		_format.align = value;
-		updateTextBuffer();
+		_needsUpdate = true;
 		return value;
 	}
 
@@ -458,11 +635,11 @@ class Text extends Image
 	 * Leading (amount of vertical space between lines).
 	 */
 	public var leading(default, set):Int;
-	private function set_leading(value:Int):Int
+	function set_leading(value:Int):Int
 	{
 		if (leading == value) return value;
 		_format.leading = leading = value;
-		updateTextBuffer();
+		_needsUpdate = true;
 		return value;
 	}
 
@@ -470,24 +647,81 @@ class Text extends Image
 	 * Automatic word wrapping.
 	 */
 	public var wordWrap(default, set):Bool;
-	private function set_wordWrap(value:Bool):Bool
+	function set_wordWrap(value:Bool):Bool
 	{
 		if (wordWrap == value) return value;
 		_field.wordWrap = wordWrap = value;
-		updateTextBuffer();
+		_needsUpdate = true;
 		return value;
 	}
 
-	override private function get_width():Int return Std.int(_width); 
-	override private function get_height():Int return Std.int(_height); 
+	override function get_width():Int return Std.int(_width);
+	override function get_height():Int return Std.int(_height);
+
+	var bufferMargin(get, null):Float;
+	inline function get_bufferMargin() return 2 + (border == null ? 0 : border.size);
+
+	override public function render(target:BitmapData, point:Point, camera:Camera)
+	{
+		if (_needsUpdate) updateTextBuffer();
+
+		if (border != null && border.alpha > 0)
+		{
+			// draw the border first
+			var textBuffer = _buffer,
+				textTint = _tint;
+			_buffer = _bitmap.bitmapData = _borderBuffer;
+			_tint = _borderTint;
+			super.render(target, point, camera);
+			_buffer = _bitmap.bitmapData = textBuffer;
+			_tint = textTint;
+		}
+
+		super.render(target, point, camera);
+	}
+
+	override public function renderAtlas(layer:Int, point:Point, camera:Camera)
+	{
+		if (_needsUpdate) updateTextBuffer();
+
+		if (border != null && border.alpha > 0)
+		{
+			// draw the border first
+			var textRegion = _region,
+				r = _red,
+				g = _green,
+				b = _blue,
+				a = _alpha;
+			_region = _borderRegion;
+			_red = border.color.r / 0xff;
+			_green = border.color.g / 0xff;
+			_blue = border.color.b / 0xff;
+			_alpha = border.alpha * _alpha;
+			super.renderAtlas(layer, point, camera);
+			_region = textRegion;
+			_red = r;
+			_green = g;
+			_blue = b;
+			_alpha = a;
+		}
+
+		super.renderAtlas(layer, point, camera);
+	}
 
 	// Text information.
-	private var _width:Int;
-	private var _height:Int;
-	private var _text:String;
-	private var _richText:String;
-	private var _field:TextField;
-	private var _format:TextFormat;
-	private var _styles:StringMap<TextFormat>;
+	var _width:Int;
+	var _height:Int;
+	var _text:String;
+	var _richText:String;
+	var _field:TextField;
+	var _format:TextFormat;
+	var _styles:StringMap<TextFormat>;
+	var _offset:Point = new Point();
+	var _whiteTint:ColorTransform = new ColorTransform(1, 1, 1, 1, 0xff, 0xff, 0xff, 1);
+	var _needsUpdate:Bool = true;
 
+	var _borderTint:ColorTransform = new ColorTransform();
+	var _borderBuffer:BitmapData;
+	var _borderRegion:AtlasRegion;
+	var _borderSource:BitmapData;
 }
