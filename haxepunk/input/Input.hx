@@ -21,7 +21,7 @@ import openfl.utils.JNI;
 
 /**
  * Abstract representing either a `String` or a `Int`.
- * 
+ *
  * Conversion is automatic, no need to use this.
  */
 abstract InputType(Either<String, Int>)
