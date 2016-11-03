@@ -5,6 +5,8 @@ import haxepunk.Engine;
 import haxepunk.HXP;
 import haxepunk.Scene;
 
+@:access(haxepunk.Engine)
+@:access(haxepunk.Screen)
 class ScreenTest extends TestSuite
 {
 	@Before
@@ -13,6 +15,7 @@ class ScreenTest extends TestSuite
 		HXP.windowWidth = 320;
 		HXP.windowHeight = 480;
 		HXP.engine = new Engine(HXP.windowWidth, HXP.windowHeight);
+		HXP.engine._scene = new Scene();
 		HXP.screen.scaleMode.setBaseSize();
 	}
 

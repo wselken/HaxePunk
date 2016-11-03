@@ -1,5 +1,7 @@
 package haxepunk;
 
+import haxepunk.ds.Dll;
+
 /**
  * A group of entities which can be added to or removed from the Scene and
  * moved together. Also supports object pooling.
@@ -18,7 +20,7 @@ class EntityList<T:Entity> extends Entity
 	public function new()
 	{
 		entities = new Array();
-		_recycled = new List();
+		_recycled = new Dll();
 		super();
 	}
 
@@ -168,5 +170,5 @@ class EntityList<T:Entity> extends Entity
 		return super.set_cameras(cameras);
 	}
 
-	var _recycled:List<T>;
+	var _recycled:Dll<T>;
 }

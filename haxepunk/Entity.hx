@@ -3,6 +3,7 @@ package haxepunk;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import haxepunk.graphics.Graphiclist;
+import haxepunk.ds.Dll;
 import haxepunk.ds.Either;
 import haxepunk.utils.MathUtil;
 
@@ -89,7 +90,7 @@ class Entity extends Tweener
 	inline function get_cameras():Array<Camera>
 	{
 		// FIXME: if scene is null?
-		return _cameras != null ? _cameras : _scene != null ? _scene._defaultCameras : [];
+		return _cameras != null ? _cameras : _scene != null ? _scene._defaultCameras : _emptyCameras;
 	}
 	function set_cameras(cameras:Array<Camera>)
 	{
@@ -952,4 +953,5 @@ class Entity extends Tweener
 	private var _cameras:Array<Camera>;
 
 	static var _EMPTY:Entity = new Entity();
+	static var _emptyCameras:Array<Camera> = new Array();
 }

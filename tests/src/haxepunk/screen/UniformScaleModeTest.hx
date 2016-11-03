@@ -1,6 +1,7 @@
 package haxepunk.screen;
 
 import massive.munit.Assert;
+import openfl.display.Stage;
 import haxepunk.Engine;
 import haxepunk.HXP;
 import haxepunk.screen.UniformScaleMode;

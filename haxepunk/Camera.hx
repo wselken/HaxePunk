@@ -119,20 +119,24 @@ class Camera extends Point
 
 	public function added()
 	{
+		if (_added) return;
 		if (HXP.renderMode == RenderMode.HARDWARE)
 		{
 			sprite = new CameraSprite(this);
+			scene.sprite.addChild(sprite);
+			_added = true;
 		}
 		else
 		{
 			buffer = new BitmapData(HXP.width, HXP.height);
 		}
-		scene.sprite.addChild(sprite);
 	}
 
 	public function removed()
 	{
+		if (!_added) return;
 		scene.sprite.removeChild(sprite);
+		_added = false;
 	}
 
 	public function resized()
@@ -260,9 +264,11 @@ class Camera extends Point
 		return Std.int(HXP.screen.mouseY - displayY + y);
 	}
 
+
+	var renderList:RenderList;
+	var _added:Bool = false;
 	var _width:Int = 0;
 	var _height:Int = 0;
-	var renderList:RenderList;
 	var _scrollRect:Rectangle = new Rectangle();
 	var _shakeTime:Float=0;
 	var _shakeMagnitude:Int=0;

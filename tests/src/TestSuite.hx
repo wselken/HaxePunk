@@ -1,5 +1,6 @@
 import massive.munit.TestSuite;
 
+import haxepunk.ds.DllTest;
 import haxepunk.EntityListTest;
 import haxepunk.ImportTest;
 import haxepunk.masks.CollideTest;
@@ -22,6 +23,7 @@ class TestSuite extends massive.munit.TestSuite
 	{
 		super();
 
+		add(haxepunk.ds.DllTest);
 		add(haxepunk.EntityListTest);
 		add(haxepunk.ImportTest);
 		add(haxepunk.masks.CollideTest);

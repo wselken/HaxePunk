@@ -4,6 +4,7 @@
 --macro include("haxepunk")
 --macro haxepunk.utils.Platform.run()
 -D display
+-D test
 -lib munit
 -lib hamcrest
 

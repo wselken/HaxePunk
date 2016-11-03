@@ -116,7 +116,7 @@ class Engine extends Sprite
 	 */
 	public function update()
 	{
-		_scene.updateLists();
+		if (_scene != null) _scene.updateLists();
 		checkScene();
 		if (HXP.tweener.active && HXP.tweener.hasTween) HXP.tweener.updateTweens();
 		if (_scene.active)
@@ -393,11 +393,14 @@ class Engine extends Sprite
 	/** @private Switch scenes if they've changed. */
 	private inline function checkScene()
 	{
-		if (_scene != null && _scenes.length > 0 && _scenes[_scenes.length - 1] != _scene)
+		if (_scenes.length > 0 && _scenes[_scenes.length - 1] != _scene)
 		{
-			_scene.end();
-			_scene.updateLists();
-			if (_scene.autoClear && _scene.hasTween) _scene.clearTweens();
+			if (_scene != null)
+			{
+				_scene.end();
+				_scene.updateLists();
+				if (_scene.autoClear && _scene.hasTween) _scene.clearTweens();
+			}
 
 			_scene = _scenes[_scenes.length - 1];
 

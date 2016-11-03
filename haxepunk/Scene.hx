@@ -3,6 +3,7 @@ package haxepunk;
 import haxe.ds.IntMap;
 import flash.display.Sprite;
 import flash.geom.Point;
+import haxepunk.ds.Dll;
 import haxepunk.graphics.atlas.AtlasData;
 import haxepunk.utils.MathUtil;
 
@@ -74,17 +75,17 @@ class Scene extends Tweener
 		sprite = new Sprite();
 		cameras = new Array();
 
-		_add = new Array<Entity>();
-		_remove = new Array<Entity>();
-		_recycle = new Array<Entity>();
+		_add = new Array();
+		_remove = new Array();
+		_recycle = new Array();
 
-		_update = new List<Entity>();
-		_layerDisplay = new Map<Int, Bool>();
-		_types = new Map<String, List<Entity>>();
+		_update = new Dll();
+		_layerDisplay = new Map();
+		_types = new Map();
 
-		_classCount = new Map<String, Int>();
-		_recycled = new Map<String, Entity>();
-		_entityNames = new Map<String, Entity>();
+		_classCount = new Map();
+		_recycled = new Map();
+		_entityNames = new Map();
 
 		renderList = new RenderList();
 
@@ -890,7 +891,7 @@ class Scene extends Tweener
 	 * @param	type 		The type to check.
 	 * @return 	The Entity list.
 	 */
-	public inline function entitiesForType(type:String):List<Entity>
+	public inline function entitiesForType(type:String):Dll<Entity>
 	{
 		return _types.exists(type) ? _types.get(type) : null;
 	}
@@ -1161,7 +1162,7 @@ class Scene extends Tweener
 	@:allow(haxepunk.Entity)
 	private function addType(e:Entity)
 	{
-		var list:List<Entity>;
+		var list:Dll<Entity>;
 		// add to type list
 		if (_types.exists(e._type))
 		{
@@ -1169,7 +1170,7 @@ class Scene extends Tweener
 		}
 		else
 		{
-			list = new List<Entity>();
+			list = new Dll<Entity>();
 			_types.set(e._type, list);
 		}
 		list.push(e);
@@ -1256,10 +1257,10 @@ class Scene extends Tweener
 	var _remove:Array<Entity>;
 	var _recycle:Array<Entity>;
 
-	var _update:List<Entity>;
+	var _update:Dll<Entity>;
 	var _layerDisplay:Map<Int, Bool>;
 	var _classCount:Map<String, Int>;
-	var _types:Map<String, List<Entity>>;
+	var _types:Map<String, Dll<Entity>>;
 
 	var _recycled:Map<String, Entity>;
 	var _entityNames:Map<String, Entity>;

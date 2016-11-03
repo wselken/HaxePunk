@@ -127,7 +127,7 @@ class SceneTest extends TestSuite
 	public function testSceneStack()
 	{
 		HXP.engine.scene = scene;
-		HXP.engine.update();
+		HXP.engine.checkScene();
 
 		var scene1 = new Scene(),
 			scene2 = new Scene();
@@ -138,7 +138,7 @@ class SceneTest extends TestSuite
 		Assert.areEqual(scene, HXP.engine._scene);
 
 		// after update, last scene pushed is active
-		HXP.engine.update();
+		HXP.engine.checkScene();
 		Assert.areEqual(scene2, HXP.engine._scene);
 
 		// pop scene, scene doesn't change
@@ -146,13 +146,13 @@ class SceneTest extends TestSuite
 		Assert.areEqual(scene2, HXP.engine._scene);
 
 		// after update, previous scene is active
-		HXP.engine.update();
+		HXP.engine.checkScene();
 		Assert.areEqual(scene1, HXP.engine._scene);
 		Assert.areEqual(scene1, HXP.engine.popScene());
 		Assert.areEqual(scene1, HXP.engine._scene);
 
 		// after pop and update, original scene is active
-		HXP.engine.update();
+		HXP.engine.checkScene();
 		Assert.areEqual(scene, HXP.engine._scene);
 	}
 
