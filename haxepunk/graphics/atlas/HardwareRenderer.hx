@@ -11,14 +11,12 @@ import openfl.gl.GL;
 import openfl.gl.GLBuffer;
 import openfl.gl.GLProgram;
 #if lime
-import lime.math.Matrix4 as Matrix3D;
 import lime.utils.Float32Array;
 import lime.utils.UInt32Array;
 #if !flash
 import openfl._internal.renderer.opengl.GLRenderer;
 #end
 #elseif nme
-import nme.geom.Matrix3D;
 import nme.utils.Float32Array;
 import nme.utils.Int32Array as UInt32Array;
 #end
@@ -29,7 +27,10 @@ private class TextureShader
 {
 	public var glProgram:GLProgram;
 
-	public static inline var VERTEX_SHADER = "
+	public static inline var VERTEX_SHADER =
+"
+#version 120
+
 attribute vec4 aPosition;
 attribute vec2 aTexCoord;
 attribute vec4 aColor;
@@ -43,13 +44,12 @@ void main(void) {
 	gl_Position = uMatrix * aPosition;
 }";
 
-	public static inline var FRAGMENT_SHADER = "
-#version 120
-
-#ifdef GL_ES
-    precision mediump float;
-#endif
-
+	public static inline var FRAGMENT_SHADER =
+"#version 120
+" +
+#if !desktop "precision mediump float;
+" + #end
+"
 varying vec2 vTexCoord;
 varying vec4 vColor;
 uniform sampler2D uImage0;
@@ -86,12 +86,20 @@ void main(void) {
 			throw "Unable to initialize the shader program.";
 	}
 
-	public function bind()
+	public inline function bind()
 	{
 		GL.useProgram(glProgram);
-		GL.enableVertexAttribArray(GL.getAttribLocation(glProgram, "aPosition"));
-		GL.enableVertexAttribArray(GL.getAttribLocation(glProgram, "aTexCoord"));
-		GL.enableVertexAttribArray(GL.getAttribLocation(glProgram, "aColor"));
+		GL.enableVertexAttribArray(attributeIndex("aPosition"));
+		GL.enableVertexAttribArray(attributeIndex("aTexCoord"));
+		GL.enableVertexAttribArray(attributeIndex("aColor"));
+	}
+
+	public inline function unbind()
+	{
+		GL.useProgram(null);
+		GL.disableVertexAttribArray(attributeIndex("aPosition"));
+		GL.disableVertexAttribArray(attributeIndex("aTexCoord"));
+		GL.disableVertexAttribArray(attributeIndex("aColor"));
 	}
 
 	public inline function attributeIndex(name:String)
@@ -107,7 +115,7 @@ void main(void) {
 
 /**
  * Rendering backend used for compatibility with OpenFL 4.0, which removed
- * support for drawTiles. Based on work by @Yanrishatum.
+ * support for drawTiles. Based on work by @Yanrishatum and @Beeblerox.
  * @since	2.6.0
  */
 #if lime
@@ -149,7 +157,7 @@ class HardwareRenderer
 
 	@:access(haxepunk.graphics.atlas.DrawCommand)
 	@:access(haxepunk.graphics.atlas.QuadData)
-	public static inline function render(drawCommand:DrawCommand, camera:Camera, rect:Rectangle):Void
+	public static function render(drawCommand:DrawCommand, camera:Camera, rect:Rectangle):Void
 	{
 		if (drawCommand != null && drawCommand.quads > 0)
 		{
@@ -165,12 +173,21 @@ class HardwareRenderer
 				uvx:Float = 0, uvy:Float = 0, uvx2:Float = 0, uvy2:Float = 0,
 				red:Float, green:Float, blue:Float, alpha:Float;
 
+			if (glBuffer == null)
+			{
+				glBuffer = GL.createBuffer();
+				glIndexes = GL.createBuffer();
+			}
+
 			// expand arrays if necessary
 			var bufferLength:Int = buffer == null ? 0 : buffer.length;
 			var items = drawCommand.quads;
 			if (bufferLength < items * BUFFER_CHUNK)
 			{
 				buffer = new Float32Array(resize(bufferLength, items, BUFFER_CHUNK));
+
+				GL.bindBuffer(GL.ARRAY_BUFFER, glBuffer);
+				GL.bufferData(GL.ARRAY_BUFFER, buffer, GL.DYNAMIC_DRAW);
 			}
 			var indexLength:Int = indexes == null ? 0 : indexes.length;
 			if (indexLength < items * INDEX_CHUNK)
@@ -179,7 +196,7 @@ class HardwareRenderer
 				var i:Int = 0, vi:Int = 0;
 				for (v in 0 ... Std.int(newIndexes.length / INDEX_CHUNK))
 				{
-					var vi = v * 4;
+					vi = v * 4;
 					newIndexes[i++] = vi;
 					newIndexes[i++] = vi + 1;
 					newIndexes[i++] = vi + 2;
@@ -188,12 +205,17 @@ class HardwareRenderer
 					newIndexes[i++] = vi + 3;
 				}
 				indexes = newIndexes;
+
+				GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, glIndexes);
+				GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, indexes, GL.DYNAMIC_DRAW);
 			}
 
 			var bufferPos:Int = 0, matrix:Matrix = HXP.matrix;
 			var texture = drawCommand.texture;
 			var quad = drawCommand.quad;
+			var x0:Float, y0:Float;
 
+			var quads:Int = 0;
 			while (quad != null)
 			{
 				rx = quad.rx;
@@ -224,7 +246,6 @@ class HardwareRenderer
 				inline function transformX(x, y) return matrixTransformX(matrix, x, y);
 				inline function transformY(x, y) return matrixTransformY(matrix, x, y);
 
-				var start = bufferPos;
 				buffer[bufferPos++] = transformX(0, 0);
 				buffer[bufferPos++] = transformY(0, 0);
 				if (texture != null)
@@ -271,11 +292,11 @@ class HardwareRenderer
 				buffer[bufferPos++] = alpha;
 
 				quad = quad._next;
+				quads++;
 			}
 
-			var rx = HXP.screen.x + rect.x, ry = HXP.screen.y + rect.y;
-			var m = Matrix3D.createOrtho(-rx, -rx + HXP.stage.stageWidth, -ry + HXP.stage.stageHeight, -ry, 1000, -1000);
-			var transformation = #if lime new Float32Array #else Float32Array.fromMatrix #end (m);
+			var x0 = HXP.screen.x + rect.x, y0 = HXP.screen.y + rect.y;
+			var transformation = ortho(-x0, -x0 + HXP.stage.stageWidth, -y0 + HXP.stage.stageHeight, -y0, 1000, -1000);
 			GL.uniformMatrix4fv(shader.uniformIndex("uMatrix"), false, transformation);
 
 			if (texture != null)
@@ -299,11 +320,8 @@ class HardwareRenderer
 				}
 			}
 
-			if (glBuffer == null)
-			{
-				glBuffer = GL.createBuffer();
-				glIndexes = GL.createBuffer();
-			}
+			GL.bindBuffer(GL.ARRAY_BUFFER, glBuffer);
+			GL.bufferSubData(GL.ARRAY_BUFFER, 0, buffer);
 
 			switch (drawCommand.blend)
 			{
@@ -324,12 +342,6 @@ class HardwareRenderer
 					GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 			}
 
-			GL.bindBuffer(GL.ARRAY_BUFFER, glBuffer);
-			GL.bufferData(GL.ARRAY_BUFFER, buffer, GL.DYNAMIC_DRAW);
-
-			GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, glIndexes);
-			GL.bufferData(GL.ELEMENT_ARRAY_BUFFER, indexes, GL.DYNAMIC_DRAW);
-
 			GL.vertexAttribPointer(shader.attributeIndex("aPosition"), 2, GL.FLOAT, false, 8 * FLOAT32_BYTES, 0);
 			if (texture != null)
 			{
@@ -337,13 +349,14 @@ class HardwareRenderer
 			}
 			GL.vertexAttribPointer(shader.attributeIndex("aColor"), 4, GL.FLOAT, false, 8 * FLOAT32_BYTES, 4 * FLOAT32_BYTES);
 
-			GL.scissor(Std.int(rx), Std.int(HXP.stage.stageHeight - ry - rect.height), Std.int(rect.width), Std.int(rect.height));
+			GL.scissor(Std.int(x0), Std.int(HXP.stage.stageHeight - y0 - rect.height), Std.int(rect.width), Std.int(rect.height));
 			GL.enable(GL.SCISSOR_TEST);
 			GL.drawElements(GL.TRIANGLES, items * INDEX_CHUNK, GL.UNSIGNED_INT, 0);
 			GL.disable(GL.SCISSOR_TEST);
+
+			shader.unbind();
 		}
 
-		GL.useProgram(null);
 		checkForGLErrors();
 	}
 
@@ -354,5 +367,33 @@ class HardwareRenderer
 			trace("GL Error: " + error);
 	}
 
+	static inline function ortho(x0:Float, x1:Float, y0:Float, y1:Float, zNear:Float, zFar:Float):Float32Array
+	{
+		var sx = 1.0 / (x1 - x0);
+		var sy = 1.0 / (y1 - y0);
+		var sz = 1.0 / (zFar - zNear);
+
+		var _data = _f32;
+		_data[0] = 2.0 * sx;
+		_data[1] = 0;
+		_data[2] = 0;
+		_data[3] = 0;
+		_data[4] = 0;
+		_data[5] = 2.0 * sy;
+		_data[6] = 0;
+		_data[7] = 0;
+		_data[8] = 0;
+		_data[9] = 0;
+		_data[10] = -2.0 * sz;
+		_data[11] = 0;
+		_data[12] = -(x0 + x1) * sx;
+		_data[13] = -(y0 + y1) * sy;
+		_data[14] = -(zNear + zFar) * sz;
+		_data[15] = 1;
+
+		return _f32;
+	}
+
 	static var _point:Point = new Point();
+	static var _f32:Float32Array = new Float32Array(16);
 }

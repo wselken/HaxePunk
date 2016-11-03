@@ -70,9 +70,9 @@ class RenderList
 	@:generic public static function insertSortedKey<T>(list:Array<T>, key:T, compare:T->T->Int):Void
 	{
 		var result:Int = 0,
-		mid:Int = 0,
-		min:Int = 0,
-		max:Int = list.length - 1;
+			mid:Int = 0,
+			min:Int = 0,
+			max:Int = list.length - 1;
 		while (max >= min)
 		{
 			mid = min + Std.int((max - min) / 2);

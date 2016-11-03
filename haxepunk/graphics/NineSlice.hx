@@ -73,7 +73,7 @@ class NineSlice extends Graphic
 	 * @param	height	New height
 	 * @return
 	 */
-	function renderSegments(renderFunc:Image -> Void, camera:Camera)
+	inline function renderSegments(renderFunc:Image -> Void, camera:Camera)
 	{
 		var x0 = camera.floorX(this.x),
 			y0 = camera.floorY(this.y);
