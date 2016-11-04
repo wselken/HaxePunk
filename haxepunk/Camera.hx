@@ -221,6 +221,14 @@ class Camera extends Point
 		}
 	}
 
+	function renderCursor()
+	{
+		if (HXP.renderMode == RenderMode.HARDWARE)
+			AtlasData.startScene(this);
+
+		HXP.cursor.render(this);
+	}
+
 	function adjustFollow(target:Entity)
 	{
 		// TODO: deadzone, lerp

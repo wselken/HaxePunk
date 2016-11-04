@@ -1,6 +1,6 @@
 package haxepunk.ds;
 
-class ListNode<T>
+@:generic class ListNode<T>
 {
 	public var value:T;
 	public var prev:ListNode<T>;
@@ -12,7 +12,7 @@ class ListNode<T>
 	}
 }
 
-private class DllIterator<T> {
+@:generic private class DllIterator<T> {
 	var dll:Dll<T>;
 	var head:ListNode<T>;
 
@@ -40,7 +40,7 @@ private class DllIterator<T> {
 	}
 }
 
-class Dll<T>
+@:generic class Dll<T>
 {
 	public var length:Int = 0;
 	public var head:ListNode<T>;

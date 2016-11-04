@@ -190,7 +190,7 @@ class Scene extends Tweener
 
 		if (HXP.cursor != null && HXP.cursor.visible)
 		{
-			HXP.cursor.render(camera);
+			camera.renderCursor();
 		}
 	}
 

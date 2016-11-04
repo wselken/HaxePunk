@@ -62,9 +62,8 @@ class Emitter extends Graphic
 		if (_particle == null) return;
 
 		// particle info
-		var e:Float = HXP.fixed ? 1 / HXP.assignedFrameRate : HXP.elapsed,
-			p:Particle = _particle,
-			n:Particle;
+		var e:Float = HXP.fixed ? 1 / HXP.assignedFrameRate : HXP.elapsed;
+		p = _particle;
 
 		// loop through the particles
 		while (p != null)
@@ -124,7 +123,7 @@ class Emitter extends Graphic
 		_particle = null;
 	}
 
-	private inline function renderParticles(renderFunc:Void->Void, point:Point, camera:Camera)
+	private inline function renderParticles(renderFunc:Image->BitmapData->Int->Point->Camera->Void, target:BitmapData, layer:Int, point:Point, camera:Camera)
 	{
 		// quit if there are no particles
 		if (_particle == null)
@@ -134,10 +133,7 @@ class Emitter extends Graphic
 		else
 		{
 			// particle info
-			var t:Float, pt:Float, td:Float,
-				atd:Float, std:Float, rtd:Float, ctd:Float,
-				p:Particle = _particle,
-				type:ParticleType;
+			p = _particle;
 
 			// loop through the particles
 			while (p != null)
@@ -185,7 +181,7 @@ class Emitter extends Graphic
 					_source.y = p.y(td) - point.y;
 					_source.smooth = smooth;
 
-					renderFunc();
+					renderFunc(_source, target, layer, point, camera);
 				}
 
 				// get next particle
@@ -196,17 +192,16 @@ class Emitter extends Graphic
 
 	override public function render(target:BitmapData, point:Point, camera:Camera)
 	{
-		renderParticles(function() _source.render(target, point, camera), point, camera);
-
-		super.render(target, point, camera);
+		renderParticles(_render, target, 0, point, camera);
 	}
 
 	override public function renderAtlas(layer:Int, point:Point, camera:Camera)
 	{
-		renderParticles(function() _source.renderAtlas(layer, point, camera), point, camera);
-
-		super.renderAtlas(layer, point, camera);
+		renderParticles(_renderAtlas, null, layer, point, camera);
 	}
+
+	static function _render(_source:Image, target:BitmapData, layer:Int, point:Point, camera:Camera) _source.render(target, point, camera);
+	static function _renderAtlas(_source:Image, target:BitmapData, layer:Int, point:Point, camera:Camera) _source.renderAtlas(layer, point, camera);
 
 	/**
 	 * Creates a new Particle type for this Emitter.
@@ -426,21 +421,33 @@ class Emitter extends Graphic
 	public var smooth:Bool = true;
 
 	// Particle information.
-	private var _types:Map<String, ParticleType>;
-	private var _particle:Particle;
-	private var _cache:Particle;
+	var _types:Map<String, ParticleType>;
+	var _particle:Particle;
+	var _cache:Particle;
 
 	// Source information.
-	private var _source:Image;
-	private var _animated:Bool = false;
-	private var _width:Int;
-	private var _height:Int;
-	private var _frameWidth:Int;
-	private var _frameHeight:Int;
-	private var _frameCount:Int;
-	private var _frames:Array<AtlasRegion>;
+	var _source:Image;
+	var _animated:Bool = false;
+	var _width:Int;
+	var _height:Int;
+	var _frameWidth:Int;
+	var _frameHeight:Int;
+	var _frameCount:Int;
+	var _frames:Array<AtlasRegion>;
 
 	// Drawing information.
-	private static var SIN(get, never):Float;
-	private static inline function get_SIN():Float return Math.PI / 2; 
+	static var SIN(get, never):Float;
+	static inline function get_SIN():Float return Math.PI / 2;
+
+	// temp vars used during update/render
+	static var t:Float = 0;
+	static var pt:Float = 0;
+	static var td:Float = 0;
+	static var atd:Float = 0;
+	static var std:Float = 0;
+	static var rtd:Float = 0;
+	static var ctd:Float = 0;
+	static var p:Particle;
+	static var n:Particle;
+	static var type:ParticleType;
 }

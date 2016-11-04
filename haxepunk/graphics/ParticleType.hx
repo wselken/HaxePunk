@@ -12,7 +12,7 @@ import haxepunk.utils.MathUtil;
 @:allow(haxepunk.graphics.Emitter)
 class ParticleType
 {
-	public inline function ease(?f:EaseFunction, t:Float):Float
+	public inline function ease(f:EaseFunction, t:Float):Float
 	{
 		return f == null ? t : f(t);
 	}
