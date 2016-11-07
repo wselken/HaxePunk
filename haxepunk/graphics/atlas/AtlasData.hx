@@ -119,7 +119,7 @@ class AtlasData
 	 * @param	scene	The scene object to set
 	 */
 	@:allow(haxepunk.Camera)
-	private static inline function startScene(camera:Camera):Void
+	private static inline function startCamera(camera:Camera):Void
 	{
 		_camera = camera;
 	}

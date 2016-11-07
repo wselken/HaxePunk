@@ -106,8 +106,8 @@ class Camera extends Point
 
 	public function center(x:Float, y:Float)
 	{
-		this.x = x - HXP.halfWidth;
-		this.y = y - HXP.halfHeight;
+		this.x = floorX(x) - floorX(HXP.halfWidth);
+		this.y = floorY(y) - floorY(HXP.halfHeight);
 	}
 
 	public function follow(?target:Entity, ?offsetX:Float = 0, ?offsetY:Float = 0)
@@ -208,7 +208,7 @@ class Camera extends Point
 		sprite.scrollRect = _scrollRect;
 
 		if (HXP.renderMode == RenderMode.HARDWARE)
-			AtlasData.startScene(this);
+			AtlasData.startCamera(this);
 
 		// render the entities in order of depth
 		for (layer in renderList.layerList)
@@ -221,10 +221,11 @@ class Camera extends Point
 		}
 	}
 
+	@:allow(haxepunk.Engine)
 	function renderCursor()
 	{
 		if (HXP.renderMode == RenderMode.HARDWARE)
-			AtlasData.startScene(this);
+			AtlasData.startCamera(this);
 
 		HXP.cursor.render(this);
 	}

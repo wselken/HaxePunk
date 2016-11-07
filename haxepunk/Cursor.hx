@@ -2,6 +2,7 @@ package haxepunk;
 
 import haxepunk.Graphic;
 import haxepunk.graphics.Image;
+import haxepunk.input.Input;
 
 class Cursor extends Entity
 {
@@ -24,8 +25,8 @@ class Cursor extends Entity
 	override public function update()
 	{
 		super.update();
-		x = scene.camera.mouseX;
-		y = scene.camera.mouseY;
+		x = Input.mouseX;
+		y = Input.mouseY;
 		var img:Image = cast graphic;
 		if (img != null)
 		{
@@ -33,21 +34,5 @@ class Cursor extends Entity
 			img.scaleX = 1 / HXP.screen.fullScaleX;
 			img.scaleY = 1 / HXP.screen.fullScaleY;
 		}
-	}
-
-	/**
-	 * Shows the custom cursor
-	 */
-	public function show()
-	{
-		visible = true;
-	}
-
-	/**
-	 * Hides the custom cursor
-	 */
-	public function hide()
-	{
-		visible = false;
 	}
 }

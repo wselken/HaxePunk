@@ -12,7 +12,7 @@ import nme.utils.Float32Array;
 @:allow(haxepunk.graphics.atlas.DrawCommand)
 private class QuadData
 {
-	public inline function new() {}
+	public function new() {}
 
 	public var rx:Float = 0;
 	public var ry:Float = 0;

@@ -79,7 +79,7 @@ class HXP
 	public static var elapsed:Float;
 
 	/**
-	 * Timescale applied to HXP.elapsed (non-fixed framerate only).
+	 * Timescale applied to HXP.elapsed.
 	 */
 	public static var rate:Float = 1;
 
