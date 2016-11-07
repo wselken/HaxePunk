@@ -18,7 +18,7 @@ class NineSlice extends Graphic
 {
 	public var width:Float;
 	public var height:Float;
-	public var clipRect:Rectangle;
+	public var clip:Rectangle;
 	public var smooth:Bool = false;
 
 	public var color:Color = 0xFFFFFF;
@@ -34,7 +34,7 @@ class NineSlice extends Graphic
 	 * @param	topHeight Distance from top side of the source image used for 9-Slicking the image
 	 * @param	bottomHeight Distance from bottom side of the source image used for 9-Slicking the image
 	 */
-	public function new(source:ImageType, leftWidth:Int = 0, rightWidth:Int = 0, topHeight:Int = 0, bottomHeight:Int = 0)
+	public function new(source:ImageType, leftWidth:Int = 0, rightWidth:Int = 0, topHeight:Int = 0, bottomHeight:Int = 0, ?clip:Rectangle)
 	{
 		super();
 		this.source = source;
@@ -55,6 +55,8 @@ class NineSlice extends Graphic
 
 		width = w;
 		height = h;
+
+		this.clip = clip;
 
 		blit = HXP.renderMode == RenderMode.BUFFER;
 	}
@@ -86,8 +88,8 @@ class NineSlice extends Graphic
 			bottomHeight:Float = Math.max(0, Math.min(Std.int((source.height - _sliceRect.height)) / camera.fullScaleY, h - topHeight)),
 			centerHeight:Float = h - topHeight - bottomHeight;
 
-		var leftX = x0, centerX = x0 + leftWidth, rightX = centerX + centerWidth,
-			topY = y0, centerY = y0 + topHeight, bottomY = centerY + centerHeight;
+		var leftX = 0, centerX = leftX + leftWidth, rightX = centerX + centerWidth,
+			topY = 0, centerY = topY + topHeight, bottomY = centerY + centerHeight;
 
 		drawSegment(renderFunc, topL, leftX, topY, leftWidth, topHeight, camera);
 		drawSegment(renderFunc, topC, centerX, topY, centerWidth, topHeight, camera);
@@ -102,6 +104,22 @@ class NineSlice extends Graphic
 
 	inline function drawSegment(renderFunc:Image -> Void, segment:Image, x:Float, y:Float, width:Float, height:Float, camera:Camera)
 	{
+		var x0 = camera.floorX(this.x),
+			y0 = camera.floorY(this.y);
+
+		if (clip != null)
+		{
+			width = Math.min(clip.right - x, width);
+			x = Math.max(clip.x, x);
+			height = Math.min(clip.bottom - y, height);
+			y = Math.max(clip.y, y);
+
+			segment.visible = width > 0 && height > 0;
+		}
+
+		x += x0;
+		y += y0;
+
 		if (segment != null && segment.visible)
 		{
 			segment.x = x;
