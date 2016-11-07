@@ -87,8 +87,8 @@ class Backdrop extends Canvas
 
 		var sx = scale * scaleX,
 			sy = scale * scaleY,
-			fsx = HXP.screen.fullScaleX,
-			fsy = HXP.screen.fullScaleY;
+			fsx = camera.fullScaleX,
+			fsy = camera.fullScaleY;
 
 		if (_repeatX)
 		{
@@ -104,16 +104,20 @@ class Backdrop extends Canvas
 
 		var px:Int = Std.int(_point.x), py:Int = Std.int(_point.y);
 
-		var y:Int = 0;
-		while (py + y < _height * sy * fsy)
+		if (Std.int(_textWidth * sx * fsx) != 0 &&
+			Std.int(_textHeight * sy * fsy) != 0)
 		{
-			var x:Int = 0;
-			while (px + x < _width * sx * fsx)
+			var y:Int = 0;
+			while (py + y < _height * sy * fsy)
 			{
-				_region.draw(px + x, py + y, layer, sx * fsx, sy * fsy, 0, _red, _green, _blue, _alpha);
-				x += Std.int(_textWidth * sx * fsx);
+				var x:Int = 0;
+				while (px + x < _width * sx * fsx)
+				{
+					_region.draw(px + x, py + y, layer, sx * fsx, sy * fsy, 0, _red, _green, _blue, _alpha);
+					x += Std.int(_textWidth * sx * fsx);
+				}
+				y += Std.int(_textHeight * sy * fsy);
 			}
-			y += Std.int(_textHeight * sy * fsy);
 		}
 	}
 
