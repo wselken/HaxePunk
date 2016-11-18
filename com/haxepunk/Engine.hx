@@ -451,6 +451,11 @@ class Engine extends Sprite
 		return _scene;
 	}
 
+        public function preRender()
+	{
+
+	}
+
 	// Scene information.
 	private var _scene:Scene = new Scene();
 	private var _scenes:Array<Scene> = new Array<Scene>();
