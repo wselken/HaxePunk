@@ -327,7 +327,7 @@ class Engine extends Sprite
 
 		// render loop
 		if (paused) _frameLast = _time; // continue updating frame timer
-		else
+		else 
 		{
 			preRender();
 			render();
@@ -373,6 +373,11 @@ class Engine extends Sprite
 
 			// update input
 			Input.update();
+			
+			if(!paused)
+			{
+				preRender();
+			}
 
 			// update timer
 			_time = Lib.getTimer();
