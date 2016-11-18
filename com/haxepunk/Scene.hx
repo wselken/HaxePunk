@@ -145,7 +145,7 @@ class Scene extends Tweener
 	 * If you override this to give your Scene render code, remember
 	 * to call super.render() or your Entities will not be rendered.
 	 */
-	public function render()
+	public function render(ratio:Float)
 	{
 		if (HXP.renderMode == RenderMode.HARDWARE)
 			AtlasData.startScene(this);
@@ -157,6 +157,10 @@ class Scene extends Tweener
 			for (e in _layers.get(layer))
 			{
 				if (e.visible) e.render();
+				if ((e != null) && e.visible && e.active && active)
+				{
+					e.Interlop(ratio);
+				}
 			}
 		}
 

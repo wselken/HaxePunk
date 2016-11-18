@@ -35,6 +35,9 @@ class Entity extends Tweener
 	 * If the Entity should respond to collision checks.
 	 */
 	public var collidable:Bool = true;
+	
+	public var displayX:Float;
+	public var displayY:Float;
 
 	/**
 	 * X position of the Entity in the Scene.
@@ -49,6 +52,7 @@ class Entity extends Tweener
 	}
 	private function set_x(v:Float):Float
 	{
+		displayX = v;
 		return x = v;
 	}
 
@@ -163,8 +167,8 @@ class Entity extends Tweener
 		{
 			if (_graphic.relative)
 			{
-				_point.x = x;
-				_point.y = y;
+				_point.x = displayX;
+				_point.y = displayY;
 			}
 			else _point.x = _point.y = 0;
 			_camera.x = _scene == null ? HXP.camera.x : _scene.camera.x;
@@ -178,6 +182,14 @@ class Entity extends Tweener
 				_graphic.renderAtlas(layer, _point, _camera);
 			}
 		}
+	}
+	 /**
+	 * Calcs the est Postion based on previous Spot
+	 * @param	inRatio.
+	 */
+	public function Interlop(inRatio:Float)
+	{
+
 	}
 
 	/**

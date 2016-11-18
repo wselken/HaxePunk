@@ -131,7 +131,7 @@ class Engine extends Sprite
 	 * Renders the game, rendering the Scene and Entities.
 	 */
 	@:dox(hide)
-	public function render()
+	public function render(inRatio:Float = 0)
 	{
 		if (HXP.screen.needsResize) HXP.resize(HXP.windowWidth, HXP.windowHeight);
 
@@ -159,7 +159,7 @@ class Engine extends Sprite
 			while (visibleScene < _scenes.length)
 			{
 				var scene = _scenes[visibleScene++];
-				if (scene.visible) scene.render();
+				if (scene.visible) scene.render(inRatio);
 			}
 		}
 
@@ -377,9 +377,10 @@ class Engine extends Sprite
 
 		// update timer
 		_renderTime = _time;
+		var ratio = _delta/_rate;
 
 		// render loop
-		if (!paused) render();
+		if (!paused) render(ratio);
 
 		// update timer
 		_time = _systemTime = Lib.getTimer();
