@@ -390,7 +390,6 @@ class Engine extends Sprite
 		// render loop
 		if (!paused)
 		{
-			preRender();
 			render();
 		}
 
