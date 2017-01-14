@@ -1,5 +1,31 @@
 HaxePunk CHANGELOG
 
+v4.0.0
+------------------------------
+
+Major release; see MIGRATION.md for migration guide.
+
+* [bendmorris] Removed com package
+* [bendmorris] Reorganization of utility functions
+* [bendmorris] Added NineSlice graphic
+* [bendmorris] Added Color abstract
+* [bendmorris] Text borders and shadows
+
+v2.6.0
+------------------------------
+* [bendmorris] OpenFL 4 and NME support
+* [bendmorris] Added EntityList
+* [bendmorris] Particle scale, rotation and trails
+* [bendmorris] Added semi-transparent scenes
+* [bendmorris] Automatic screen scaling modes
+* [bendmorris] Allow importing from either `com.haxepunk.*` or `haxepunk.*`
+* [bendmorris] Added examples: asteroids, HXPBunnies, screenscale, text
+* [EdgarMagdaleno] Custom cursor support
+* [EdgarMagdaleno] Add Graphiclist get function
+* [matrefeytontias] Fix Backdrop scaling issue
+* [wselkin] Added BitmapFilter Array to TextOptions
+* [wselkin] Other text improvements
+
 v2.5.6
 ------------------------------
 * [ibilon] Fix input update

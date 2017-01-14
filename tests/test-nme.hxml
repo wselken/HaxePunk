@@ -1,16 +1,14 @@
 -cp ..
 -cp src
 -main TestMain
---macro include("com.haxepunk")
---macro com.haxepunk.utils.Platform.run()
--D display
+--macro include("haxepunk")
+--macro haxepunk.utils.Platform.run()
 -lib munit
 -lib hamcrest
 
 --each
 
 -D openfl
--D openfl_legacy
 -D nme
 -D native
 -D linux
