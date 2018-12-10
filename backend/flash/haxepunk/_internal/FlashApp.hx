@@ -1,6 +1,5 @@
 package haxepunk._internal;
 
-import flash.display.OpenGLView;
 import flash.display.Sprite;
 import flash.display.StageAlign;
 import flash.display.StageDisplayState;
@@ -62,6 +61,11 @@ class FlashApp extends Sprite
 		engine.onUpdate();
 	}
 
+	function initRenderer()
+	{
+		throw "not implemented";
+	}
+
 	/** @private Event handler for stage entry. */
 	@:access(haxepunk.Engine)
 	function onStage(?e:Event)
@@ -70,18 +74,14 @@ class FlashApp extends Sprite
 		removeEventListener(Event.ADDED_TO_STAGE, onStage);
 		setStageProperties();
 
-		// create an OpenGLView object and use the engine's render method
-		var view = new OpenGLView();
-		view.render = function(rect:Rectangle)
-		{
-			engine.onRender();
-		};
-		addChild(view);
+		initRenderer();
 
 		// enable input
 		initKeyInput();
 		initMouseInput();
+		#if !hxp_no_gamepad
 		initGamepadInput();
+		#end
 
 		if (multiTouchSupported())
 		{
@@ -179,11 +179,13 @@ class FlashApp extends Sprite
 		KeyInput.init(this);
 	}
 
+	#if !hxp_no_gamepad
 	public function initGamepadInput()
 	{
 		Log.debug("init gamepad input");
 		GamepadInput.init(this);
 	}
+	#end
 
 	public function initTouchInput()
 	{

@@ -51,6 +51,11 @@ class Scene extends Tweener
 	public var camera:Camera;
 
 	/**
+	 * Set to true after `begin` is called.
+	 */
+	public var started:Bool = false;
+
+	/**
 	 * Scene-scoped asset cache. These assets will be destroyed when the scene
 	 * ends.
 	 */
@@ -136,9 +141,14 @@ class Scene extends Tweener
 	}
 
 	/**
-	 * Override this; called when Scene is switch to, and set to the currently active scene.
+	 * Override this; called when Scene is switched to for the first time.
 	 */
 	public function begin() {}
+
+	/**
+	 * Override this; called when this Scene is switched to after it has already begun.
+	 */
+	public function resume() {}
 
 	/**
 	 * Override this; called when Scene is changed, and the active scene is no longer this.
@@ -191,7 +201,13 @@ class Scene extends Tweener
 					}
 				}
 			}
-			if (e.graphic != null && e.graphic.active) e.graphic.update();
+			var g = e.graphic;
+			if (g != null && g.active)
+			{
+				g.preUpdate.invoke();
+				g.update();
+				g.postUpdate.invoke();
+			}
 		}
 
 		// update the camera again, in case it's following an entity
@@ -1140,6 +1156,7 @@ class Scene extends Tweener
 				if (e._scene != this)
 					continue;
 				e.removed();
+				e.onRemove.invoke();
 				e._scene = null;
 				removeUpdate(e);
 				removeRender(e);
@@ -1162,6 +1179,7 @@ class Scene extends Tweener
 				if (e._type != "") addType(e);
 				if (e._name != "") registerName(e);
 				e.added();
+				e.onAdd.invoke();
 			}
 			HXP.clear(_add);
 		}

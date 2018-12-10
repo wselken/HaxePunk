@@ -1,6 +1,7 @@
 package haxepunk;
 
 import haxe.ds.Either;
+import haxepunk.Signal;
 import haxepunk.assets.AssetCache;
 import haxepunk.graphics.atlas.Atlas;
 import haxepunk.graphics.atlas.TileAtlas;
@@ -98,6 +99,18 @@ abstract ImageOrTileType(Either<ImageType, TileType>) from Either<ImageType, Til
  */
 class Graphic
 {
+	/**
+	 * Newly created graphics will have this `smooth` setting by default.
+	 */
+	public static var smoothDefault:Bool = true;
+
+	/**
+	 * Newly created graphics will have this `pixelSnapping` setting by default,
+	 * except for `haxepunk.graphics.tile.*` graphics which will always default
+	 * to `true`.
+	 */
+	public static var pixelSnappingDefault:Bool = false;
+
 	/**
 	 * If the graphic should update.
 	 */
@@ -234,14 +247,17 @@ class Graphic
 		}
 	}
 
+	public var preUpdate:Signal0 = new Signal0();
+	public var postUpdate:Signal0 = new Signal0();
+
 	/**
 	 * Constructor.
 	 */
 	@:allow(haxepunk)
 	function new()
 	{
-		// TODO: smooth default
-		smooth = true;
+		smooth = smoothDefault;
+		pixelSnapping = pixelSnappingDefault;
 		color = Color.White;
 		shader = TextureShader.defaultShader;
 		_class = Type.getClassName(Type.getClass(this));

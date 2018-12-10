@@ -17,8 +17,6 @@ typedef SolidType = OneOf<String, Array<String>>;
 @:allow(haxepunk.Scene)
 class Entity extends Tweener
 {
-	@:dox(hide) @:to public static inline function toPosition(entity:Entity):Position return new Position(entity);
-
 	/**
 	 * The entity's parent, if any. This entity's position will be offset by
 	 * the parent's position.
@@ -131,6 +129,8 @@ class Entity extends Tweener
 	 */
 	public var originY:Int = 0;
 
+	public var onAdd:Signal0 = new Signal0();
+	public var onRemove:Signal0 = new Signal0();
 	public var preUpdate:Signal0 = new Signal0();
 	public var postUpdate:Signal0 = new Signal0();
 
@@ -335,7 +335,7 @@ class Entity extends Tweener
 		{
 			if (_mask == null)
 			{
-				if ((untyped e._mask) == null || (untyped e._mask).collide(HITBOX))
+				if ((e._mask) == null || (e._mask).collide(HITBOX))
 				{
 					this.x = _x; this.y = _y;
 					return e;
@@ -343,7 +343,7 @@ class Entity extends Tweener
 				this.x = _x; this.y = _y;
 				return null;
 			}
-			if (_mask.collide((untyped e._mask) != null ? (untyped e._mask) : (untyped e.HITBOX)))
+			if (_mask.collide((e._mask) != null ? (e._mask) : (e.HITBOX)))
 			{
 				this.x = _x; this.y = _y;
 				return e;
@@ -451,7 +451,7 @@ class Entity extends Tweener
 					&& x - originX < e.x - e.originX + e.width
 					&& y - originY < e.y - e.originY + e.height)
 				{
-					if ((untyped e._mask) == null || (untyped e._mask).collide(HITBOX)) array[n++] = cast e;
+					if ((e._mask) == null || (e._mask).collide(HITBOX)) array[n++] = cast e;
 				}
 			}
 		}
@@ -466,7 +466,7 @@ class Entity extends Tweener
 					&& x - originX < e.x - e.originX + e.width
 					&& y - originY < e.y - e.originY + e.height)
 				{
-					if (_mask.collide((untyped e._mask) != null ? (untyped e._mask) : (untyped e.HITBOX))) array[n++] = cast e;
+					if (_mask.collide((e._mask) != null ? (e._mask) : (e.HITBOX))) array[n++] = cast e;
 				}
 			}
 		}
@@ -863,7 +863,7 @@ class Entity extends Tweener
 	{
 		_point.x = x - this.x;
 		_point.y = y - this.y;
-		if (_point.x * _point.x + _point.y * _point.y > amount * amount)
+		if (_point.dot(_point) > amount * amount)
 		{
 			_point.normalize(amount);
 		}
